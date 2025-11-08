@@ -32,13 +32,11 @@ const tagSchema = new Schema<ITag>({
 
 tagSchema.index({ name: 1, couple: 1 }, { unique: true });
 
-// Export with proper model registration for serverless environments
-let Tag: Model<ITag>;
-
-try {
-  Tag = mongoose.model<ITag>('Tag');
-} catch {
-  Tag = mongoose.model<ITag>('Tag', tagSchema);
+// Delete the model from cache if it exists to ensure clean registration
+if (mongoose.models.Tag) {
+  delete mongoose.models.Tag;
 }
+
+const Tag: Model<ITag> = mongoose.model<ITag>('Tag', tagSchema);
 
 export default Tag;

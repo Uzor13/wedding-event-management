@@ -102,13 +102,11 @@ const settingsSchema = new Schema<ISetting>({
 
 settingsSchema.index({ couple: 1 }, { unique: true, sparse: true });
 
-// Export with proper model registration for serverless environments
-let Setting: Model<ISetting>;
-
-try {
-  Setting = mongoose.model<ISetting>('Setting');
-} catch {
-  Setting = mongoose.model<ISetting>('Setting', settingsSchema);
+// Delete the model from cache if it exists to ensure clean registration
+if (mongoose.models.Setting) {
+  delete mongoose.models.Setting;
 }
+
+const Setting: Model<ISetting> = mongoose.model<ISetting>('Setting', settingsSchema);
 
 export default Setting;

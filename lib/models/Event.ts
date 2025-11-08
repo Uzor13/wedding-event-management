@@ -41,13 +41,11 @@ eventSchema.index({ couple: 1 });
 eventSchema.index({ date: 1, couple: 1 });
 eventSchema.index({ eventType: 1, couple: 1 });
 
-// Export with proper model registration for serverless environments
-let Event: Model<IEvent>;
-
-try {
-  Event = mongoose.model<IEvent>('Event');
-} catch {
-  Event = mongoose.model<IEvent>('Event', eventSchema);
+// Delete the model from cache if it exists to ensure clean registration
+if (mongoose.models.Event) {
+  delete mongoose.models.Event;
 }
+
+const Event: Model<IEvent> = mongoose.model<IEvent>('Event', eventSchema);
 
 export default Event;

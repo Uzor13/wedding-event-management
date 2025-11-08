@@ -125,6 +125,13 @@ export default function GuestList() {
         })
       ]);
 
+      console.log('Guests loaded:', guestsRes.data.length);
+      console.log('First guest data:', guestsRes.data[0]);
+      if (guestsRes.data.length > 0) {
+        console.log('First guest plusOneAllowed:', guestsRes.data[0]?.plusOneAllowed);
+        console.log('First guest plusOneName:', guestsRes.data[0]?.plusOneName);
+      }
+
       setGuests(guestsRes.data);
       setTags(tagsRes.data);
       setEventSettings(settingsRes.data);

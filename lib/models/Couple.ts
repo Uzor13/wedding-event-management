@@ -25,13 +25,11 @@ const coupleSchema = new Schema<ICouple>({
   eventTitle: { type: String, default: 'Wedding Invitation' }
 }, { timestamps: true });
 
-// Export with proper model registration for serverless environments
-let Couple: Model<ICouple>;
-
-try {
-  Couple = mongoose.model<ICouple>('Couple');
-} catch {
-  Couple = mongoose.model<ICouple>('Couple', coupleSchema);
+// Delete the model from cache if it exists to ensure clean registration
+if (mongoose.models.Couple) {
+  delete mongoose.models.Couple;
 }
+
+const Couple: Model<ICouple> = mongoose.model<ICouple>('Couple', coupleSchema);
 
 export default Couple;
