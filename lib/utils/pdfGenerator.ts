@@ -115,8 +115,8 @@ export async function generateInvitationPDF(
   yPos += 20;
 
   // Calculate box height dynamically based on content
-  const addressLines = doc.splitTextToSize(eventDetails.venueAddress, pageWidth - 70);
-  const boxHeight = 45 + (addressLines.length - 1) * 5;
+  const addressLines = doc.splitTextToSize(eventDetails.venueAddress, pageWidth - 85);
+  const boxHeight = 58 + (addressLines.length - 1) * 6;
 
   // Event details box
   doc.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
@@ -127,42 +127,46 @@ export async function generateInvitationPDF(
   doc.setFontSize(11);
   doc.setTextColor(60, 60, 60);
 
-  yPos += 5;
+  yPos += 8;
+
+  // Define consistent label width for alignment
+  const labelX = 30;
+  const valueX = 68;
 
   // Date
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('Date:', 28, yPos);
+  doc.text('Date:', labelX, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.eventDate, 55, yPos);
-  yPos += 8;
+  doc.text(eventDetails.eventDate, valueX, yPos);
+  yPos += 10;
 
   // Time
   doc.setFont('helvetica', 'bold');
-  doc.text('Time:', 28, yPos);
+  doc.text('Time:', labelX, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.eventTime, 55, yPos);
-  yPos += 8;
+  doc.text(eventDetails.eventTime, valueX, yPos);
+  yPos += 10;
 
   // Venue
   doc.setFont('helvetica', 'bold');
-  doc.text('Venue:', 28, yPos);
+  doc.text('Venue:', labelX, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.venueName, 55, yPos);
-  yPos += 8;
+  doc.text(eventDetails.venueName, valueX, yPos);
+  yPos += 10;
 
   // Address (split if too long)
   doc.setFont('helvetica', 'bold');
-  doc.text('Address:', 28, yPos);
+  doc.text('Address:', labelX, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(addressLines, 55, yPos);
-  yPos += addressLines.length * 5 + 8;
+  doc.text(addressLines, valueX, yPos);
+  yPos += addressLines.length * 6 + 4;
 
   // Color of the day
   doc.setFont('helvetica', 'bold');
-  doc.text('Dress Code:', 28, yPos);
+  doc.text('Dress Code:', labelX, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.colorOfDay, 55, yPos);
+  doc.text(eventDetails.colorOfDay, valueX, yPos);
   yPos += 15;
 
   // QR Code section

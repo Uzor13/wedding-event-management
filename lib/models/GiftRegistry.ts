@@ -31,6 +31,6 @@ const giftRegistrySchema = new Schema<IGiftRegistry>({
 giftRegistrySchema.index({ couple: 1 });
 giftRegistrySchema.index({ category: 1, couple: 1 });
 
-const GiftRegistry: Model<IGiftRegistry> = (mongoose.models.GiftRegistry as Model<IGiftRegistry>) || mongoose.model<IGiftRegistry>('GiftRegistry', giftRegistrySchema);
+const GiftRegistry = mongoose.models.GiftRegistry || mongoose.model('GiftRegistry', giftRegistrySchema);
 
 export default GiftRegistry;

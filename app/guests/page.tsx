@@ -397,13 +397,13 @@ export default function GuestList() {
       };
 
       const eventDetails = {
-        eventTitle: eventSettings.eventTitle,
-        coupleNames: eventSettings.coupleNames,
-        eventDate: eventSettings.eventDate,
-        eventTime: eventSettings.eventTime,
-        venueName: eventSettings.venueName,
-        venueAddress: eventSettings.venueAddress,
-        colorOfDay: eventSettings.colorOfDay
+        eventTitle: eventSettings.eventTitle || 'Wedding Invitation',
+        coupleNames: eventSettings.coupleNames || 'The Happy Couple',
+        eventDate: eventSettings.eventDate || 'Date TBD',
+        eventTime: eventSettings.eventTime || 'Time TBD',
+        venueName: eventSettings.venueName || 'Venue TBD',
+        venueAddress: eventSettings.venueAddress || 'Address TBD',
+        colorOfDay: eventSettings.colorOfDay || 'Dress Code TBD'
       };
 
       const theme = {
@@ -411,6 +411,10 @@ export default function GuestList() {
         secondaryColor: eventSettings.theme?.secondaryColor || '#8B7355',
         accentColor: eventSettings.theme?.accentColor || '#F5E9D3'
       };
+
+      console.log('PDF Event Settings:', eventSettings);
+      console.log('PDF Event Details:', eventDetails);
+      console.log('PDF Theme:', theme);
 
       toast.info('Generating PDF invitation...');
       const pdfBlob = await generateInvitationPDF(guestInfo, eventDetails, theme, rsvpLink);
@@ -714,26 +718,9 @@ export default function GuestList() {
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                {guest.plusOneAllowed ? (
-                                  guest.plusOneName ? (
-                                    <div className="text-sm">
-                                      <p className="font-medium text-gray-900">{guest.plusOneName}</p>
-                                      <span
-                                        className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                          guest.plusOneRsvp
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-orange-100 text-orange-700'
-                                        }`}
-                                      >
-                                        {guest.plusOneRsvp ? 'Confirmed' : 'Pending'}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400 text-xs">Allowed, not added</span>
-                                  )
-                                ) : (
-                                  <span className="text-gray-400 text-xs">Not allowed</span>
-                                )}
+                                <span className={`text-sm font-medium ${guest.plusOneAllowed ? 'text-green-600' : 'text-gray-500'}`}>
+                                  {guest.plusOneAllowed ? 'Yes' : 'No'}
+                                </span>
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex flex-wrap gap-1">

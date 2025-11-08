@@ -30,6 +30,6 @@ budgetItemSchema.index({ couple: 1 });
 budgetItemSchema.index({ category: 1, couple: 1 });
 budgetItemSchema.index({ paid: 1, couple: 1 });
 
-const BudgetItem: Model<IBudgetItem> = (mongoose.models.BudgetItem as Model<IBudgetItem>) || mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema);
+const BudgetItem = mongoose.models.BudgetItem || mongoose.model('BudgetItem', budgetItemSchema);
 
 export default BudgetItem;
