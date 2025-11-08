@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 // Import all models to ensure they're registered
-import '../models/index';
+import '@/lib/models/index';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 

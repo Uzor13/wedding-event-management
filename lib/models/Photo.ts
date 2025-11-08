@@ -40,6 +40,6 @@ declare global {
   var Photo: Model<IPhoto> | undefined;
 }
 
-const Photo = global.Photo || (global.Photo = mongoose.model<IPhoto>('Photo', photoSchema));
+const Photo = global.Photo || mongoose.models.Photo || (global.Photo = mongoose.model<IPhoto>('Photo', photoSchema));
 
 export default Photo;

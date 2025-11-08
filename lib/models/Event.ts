@@ -45,6 +45,6 @@ declare global {
   var Event: Model<IEvent> | undefined;
 }
 
-const Event = global.Event || (global.Event = mongoose.model<IEvent>('Event', eventSchema));
+const Event = global.Event || mongoose.models.Event || (global.Event = mongoose.model<IEvent>('Event', eventSchema));
 
 export default Event;

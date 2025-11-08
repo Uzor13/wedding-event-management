@@ -34,6 +34,6 @@ declare global {
   var BudgetItem: Model<IBudgetItem> | undefined;
 }
 
-const BudgetItem = global.BudgetItem || (global.BudgetItem = mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema));
+const BudgetItem = global.BudgetItem || mongoose.models.BudgetItem || (global.BudgetItem = mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema));
 
 export default BudgetItem;

@@ -35,6 +35,6 @@ declare global {
   var GiftRegistry: Model<IGiftRegistry> | undefined;
 }
 
-const GiftRegistry = global.GiftRegistry || (global.GiftRegistry = mongoose.model<IGiftRegistry>('GiftRegistry', giftRegistrySchema));
+const GiftRegistry = global.GiftRegistry || mongoose.models.GiftRegistry || (global.GiftRegistry = mongoose.model<IGiftRegistry>('GiftRegistry', giftRegistrySchema));
 
 export default GiftRegistry;

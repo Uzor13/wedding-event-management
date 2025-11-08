@@ -25,6 +25,6 @@ declare global {
   var Message: Model<IMessage> | undefined;
 }
 
-const Message = global.Message || (global.Message = mongoose.model<IMessage>('Message', messageSchema));
+const Message = global.Message || mongoose.models.Message || (global.Message = mongoose.model<IMessage>('Message', messageSchema));
 
 export default Message;

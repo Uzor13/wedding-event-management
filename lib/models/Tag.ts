@@ -36,6 +36,6 @@ declare global {
   var Tag: Model<ITag> | undefined;
 }
 
-const Tag = global.Tag || (global.Tag = mongoose.model<ITag>('Tag', tagSchema));
+const Tag = global.Tag || mongoose.models.Tag || (global.Tag = mongoose.model<ITag>('Tag', tagSchema));
 
 export default Tag;

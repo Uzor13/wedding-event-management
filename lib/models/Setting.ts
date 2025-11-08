@@ -106,6 +106,6 @@ declare global {
   var Setting: Model<ISetting> | undefined;
 }
 
-const Setting = global.Setting || (global.Setting = mongoose.model<ISetting>('Setting', settingsSchema));
+const Setting = global.Setting || mongoose.models.Setting || (global.Setting = mongoose.model<ISetting>('Setting', settingsSchema));
 
 export default Setting;

@@ -29,6 +29,6 @@ declare global {
   var Couple: Model<ICouple> | undefined;
 }
 
-const Couple = global.Couple || (global.Couple = mongoose.model<ICouple>('Couple', coupleSchema));
+const Couple = global.Couple || mongoose.models.Couple || (global.Couple = mongoose.model<ICouple>('Couple', coupleSchema));
 
 export default Couple;

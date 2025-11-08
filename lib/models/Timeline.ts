@@ -32,6 +32,6 @@ declare global {
   var TimelineItem: Model<ITimelineItem> | undefined;
 }
 
-const TimelineItem = global.TimelineItem || (global.TimelineItem = mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema));
+const TimelineItem = global.TimelineItem || mongoose.models.TimelineItem || (global.TimelineItem = mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema));
 
 export default TimelineItem;
