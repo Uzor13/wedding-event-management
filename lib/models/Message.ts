@@ -21,6 +21,13 @@ const messageSchema = new Schema<IMessage>({
 messageSchema.index({ couple: 1, approved: 1 });
 messageSchema.index({ couple: 1, createdAt: -1 });
 
-const Message: Model<IMessage> = mongoose.models.Message || mongoose.model<IMessage>('Message', messageSchema);
+// Export with proper model registration for serverless environments
+let Message: Model<IMessage>;
+
+try {
+  Message = mongoose.model<IMessage>('Message');
+} catch {
+  Message = mongoose.model<IMessage>('Message', messageSchema);
+}
 
 export default Message;

@@ -102,6 +102,13 @@ const settingsSchema = new Schema<ISetting>({
 
 settingsSchema.index({ couple: 1 }, { unique: true, sparse: true });
 
-const Setting: Model<ISetting> = mongoose.models.Setting || mongoose.model<ISetting>('Setting', settingsSchema);
+// Export with proper model registration for serverless environments
+let Setting: Model<ISetting>;
+
+try {
+  Setting = mongoose.model<ISetting>('Setting');
+} catch {
+  Setting = mongoose.model<ISetting>('Setting', settingsSchema);
+}
 
 export default Setting;

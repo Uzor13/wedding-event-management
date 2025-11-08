@@ -41,6 +41,13 @@ eventSchema.index({ couple: 1 });
 eventSchema.index({ date: 1, couple: 1 });
 eventSchema.index({ eventType: 1, couple: 1 });
 
-const Event: Model<IEvent> = mongoose.models.Event || mongoose.model<IEvent>('Event', eventSchema);
+// Export with proper model registration for serverless environments
+let Event: Model<IEvent>;
+
+try {
+  Event = mongoose.model<IEvent>('Event');
+} catch {
+  Event = mongoose.model<IEvent>('Event', eventSchema);
+}
 
 export default Event;

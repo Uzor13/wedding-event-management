@@ -28,6 +28,13 @@ const timelineItemSchema = new Schema<ITimelineItem>({
 
 timelineItemSchema.index({ couple: 1, order: 1 });
 
-const TimelineItem: Model<ITimelineItem> = mongoose.models.TimelineItem || mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema);
+// Export with proper model registration for serverless environments
+let TimelineItem: Model<ITimelineItem>;
+
+try {
+  TimelineItem = mongoose.model<ITimelineItem>('TimelineItem');
+} catch {
+  TimelineItem = mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema);
+}
 
 export default TimelineItem;

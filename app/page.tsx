@@ -156,16 +156,29 @@ export default function GuestForm() {
         }
       );
 
+      console.log('Add guest response:', response.data);
+      console.log('Guest object:', response.data.guest);
+      console.log('Guest ID:', response.data.guest?._id);
+
       // If tags are selected, assign them to the newly created guest
       if (selectedTags.length > 0 && response.data.guest?._id) {
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${response.data.guest._id}/assign-tags`,
-          { tagIds: selectedTags },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: isAdmin ? { coupleId: targetCoupleId } : {}
-          }
-        );
+        console.log('Attempting to assign tags:', selectedTags, 'to guest:', response.data.guest._id);
+        try {
+          const tagResponse = await axios.put(
+            `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${response.data.guest._id}/assign-tags`,
+            { tagIds: selectedTags },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              params: isAdmin ? { coupleId: targetCoupleId } : {}
+            }
+          );
+          console.log('Tag assignment response:', tagResponse.data);
+        } catch (tagError: any) {
+          console.error('Tag assignment failed:', tagError.response?.data || tagError.message);
+          // Don't throw - guest was created successfully even if tags failed
+        }
+      } else {
+        console.log('Skipping tag assignment - selectedTags:', selectedTags, 'guestId:', response.data.guest?._id);
       }
 
       setMessage('Guest added successfully.');
