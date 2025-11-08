@@ -32,6 +32,12 @@ const tagSchema = new Schema<ITag>({
 
 tagSchema.index({ name: 1, couple: 1 }, { unique: true });
 
-const Tag = mongoose.models.Tag || mongoose.model('Tag', tagSchema);
+let Tag: Model<ITag>;
+
+try {
+  Tag = mongoose.model<ITag>('Tag');
+} catch {
+  Tag = mongoose.model<ITag>('Tag', tagSchema);
+}
 
 export default Tag;

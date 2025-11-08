@@ -36,6 +36,12 @@ photoSchema.index({ couple: 1, category: 1 });
 photoSchema.index({ couple: 1, createdAt: -1 });
 photoSchema.index({ couple: 1, order: 1 });
 
-const Photo = mongoose.models.Photo || mongoose.model('Photo', photoSchema);
+let Photo: Model<IPhoto>;
+
+try {
+  Photo = mongoose.model<IPhoto>('Photo');
+} catch {
+  Photo = mongoose.model<IPhoto>('Photo', photoSchema);
+}
 
 export default Photo;
