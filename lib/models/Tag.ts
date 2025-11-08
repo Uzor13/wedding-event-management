@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ITag extends Document {
   name: string;
+  color: string;
   couple: mongoose.Types.ObjectId;
   users: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -12,6 +13,10 @@ const tagSchema = new Schema<ITag>({
   name: {
     type: String,
     required: true
+  },
+  color: {
+    type: String,
+    default: '#3b82f6'
   },
   couple: {
     type: Schema.Types.ObjectId,

@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
 
     const filter = coupleId ? { couple: coupleId } : {};
-    const guests = await Guest.find(filter).select('-qrCode').sort({ createdAt: -1 });
+    const guests = await Guest.find(filter)
+      .select('-qrCode')
+      .populate('tags', 'name color')
+      .sort({ createdAt: -1 });
 
     return NextResponse.json(guests);
   } catch (error: any) {

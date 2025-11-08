@@ -5,7 +5,7 @@ import { verifyAuth } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { uniqueId: string } }
+  { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
     const auth = verifyAuth(request);
@@ -18,7 +18,7 @@ export async function POST(
 
     await dbConnect();
 
-    const { uniqueId } = params;
+    const { uniqueId } = await params;
     const { coupleId: bodyCoupleId } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 

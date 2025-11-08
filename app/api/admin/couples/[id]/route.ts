@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcrypt';
 import dbConnect from '@/lib/db/mongodb';
+import Couple from '@/lib/models/Couple';
+import Guest from '@/lib/models/Guest';
+import Setting from '@/lib/models/Setting';
 import Tag from '@/lib/models/Tag';
 import { verifyAuth } from '@/lib/auth';
 
@@ -9,7 +13,7 @@ export async function PUT(
 ) {
   try {
     const auth = verifyAuth(request);
-    if (auth.role !== 'admin' && auth.role !== 'couple') {
+    if (auth.role !== 'admin') {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 403 }
@@ -19,12 +23,7 @@ export async function PUT(
     await dbConnect();
 
     const { id } = await params;
-    const { name, color } = await request.json();
-    const { searchParams } = new URL(request.url);
-    const coupleId = auth.role === 'couple'
-      ? auth.coupleId
-      : searchParams.get('coupleId');
-
+    const { name, email, password } = await request.json();
     if (!name) {
       return NextResponse.json(
         { message: 'Name is required' },
@@ -32,33 +31,30 @@ export async function PUT(
       );
     }
 
-    const filter: any = { _id: id };
-    if (coupleId) {
-      filter.couple = coupleId;
+    const update: any = { name, email };
+
+    // Only hash and update password if provided
+    if (password) {
+      update.password = await bcrypt.hash(password, 10);
     }
 
-    const update: any = { name };
-    if (color) {
-      update.color = color;
-    }
-
-    const tag = await Tag.findOneAndUpdate(
-      filter,
+    const couple = await Couple.findByIdAndUpdate(
+      id,
       update,
       { new: true }
-    ).populate('users', 'name phoneNumber');
+    ).select('-password');
 
-    if (!tag) {
+    if (!couple) {
       return NextResponse.json(
-        { message: 'Tag not found' },
+        { message: 'Couple not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(tag);
+    return NextResponse.json(couple);
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message },
+      { message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
@@ -70,7 +66,7 @@ export async function DELETE(
 ) {
   try {
     const auth = verifyAuth(request);
-    if (auth.role !== 'admin' && auth.role !== 'couple') {
+    if (auth.role !== 'admin') {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 403 }
@@ -80,29 +76,26 @@ export async function DELETE(
     await dbConnect();
 
     const { id } = await params;
-    const { searchParams } = new URL(request.url);
-    const coupleId = auth.role === 'couple'
-      ? auth.coupleId
-      : searchParams.get('coupleId');
-
-    const filter: any = { _id: id };
-    if (coupleId) {
-      filter.couple = coupleId;
-    }
-
-    const tag = await Tag.findOneAndDelete(filter);
-
-    if (!tag) {
+    const couple = await Couple.findById(id);
+    if (!couple) {
       return NextResponse.json(
-        { message: 'Tag not found' },
+        { message: 'Couple not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ message: 'Tag deleted' });
+    // Delete all related data
+    await Promise.all([
+      Guest.deleteMany({ couple: id }),
+      Tag.deleteMany({ couple: id }),
+      Setting.deleteOne({ couple: id }),
+      Couple.findByIdAndDelete(id)
+    ]);
+
+    return NextResponse.json({ message: 'Couple and all related data deleted successfully' });
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message },
+      { message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

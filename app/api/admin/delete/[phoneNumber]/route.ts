@@ -5,7 +5,7 @@ import { verifyAuth } from '@/lib/auth';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { phoneNumber: string } }
+  { params }: { params: Promise<{ phoneNumber: string }> }
 ) {
   try {
     const auth = verifyAuth(request);
@@ -18,7 +18,7 @@ export async function DELETE(
 
     await dbConnect();
 
-    const { phoneNumber } = params;
+    const { phoneNumber } = await params;
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
 

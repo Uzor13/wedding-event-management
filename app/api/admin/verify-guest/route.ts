@@ -35,21 +35,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (guest.isUsed) {
-      return NextResponse.json(
-        { success: false, message: 'This code has already been used' },
-        { status: 400 }
-      );
+    // Track if already used BEFORE updating
+    const wasAlreadyUsed = guest.isUsed;
+
+    if (wasAlreadyUsed) {
+      // Populate tags even for already-used guests
+      await guest.populate('tags');
+
+      return NextResponse.json({
+        success: true,
+        message: 'This guest has already been verified',
+        name: guest.name,
+        phoneNumber: guest.phoneNumber,
+        code: guest.code,
+        uniqueId: guest.uniqueId,
+        rsvpStatus: guest.rsvpStatus,
+        isUsed: true,
+        tags: guest.tags?.map((tag: any) => ({
+          name: tag.name,
+          color: tag.color
+        })) || []
+      });
     }
 
     guest.isUsed = true;
     guest.rsvpStatus = true;
     await guest.save();
 
+    // Populate tags to include in response
+    await guest.populate('tags');
+
     return NextResponse.json({
       success: true,
       message: 'Verification successful',
-      guestName: guest.name
+      name: guest.name,
+      phoneNumber: guest.phoneNumber,
+      code: guest.code,
+      uniqueId: guest.uniqueId,
+      rsvpStatus: guest.rsvpStatus,
+      isUsed: false, // Return false on first scan for proper UI feedback
+      tags: guest.tags?.map((tag: any) => ({
+        name: tag.name,
+        color: tag.color
+      })) || []
     });
   } catch (error: any) {
     return NextResponse.json(

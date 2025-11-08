@@ -5,12 +5,12 @@ import Setting from '@/lib/models/Setting';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { uniqueId: string } }
+  { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
     await dbConnect();
 
-    const { uniqueId } = params;
+    const { uniqueId } = await params;
 
     const guest = await Guest.findOne({ uniqueId })
       .populate('couple')
@@ -39,12 +39,12 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { uniqueId: string } }
+  { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
     await dbConnect();
 
-    const { uniqueId } = params;
+    const { uniqueId } = await params;
 
     const guest = await Guest.findOne({ uniqueId });
 
