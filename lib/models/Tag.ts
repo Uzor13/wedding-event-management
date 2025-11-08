@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ITag extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   color: string;
   couple: mongoose.Types.ObjectId;

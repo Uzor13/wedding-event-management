@@ -13,7 +13,7 @@ export async function GET(
 
     const guest = await Guest.findOne({ uniqueId })
       .select('name phoneNumber uniqueId rsvpStatus plusOneAllowed plusOneName plusOnePhone plusOneRsvp mealPreference plusOneMealPreference dietaryRestrictions plusOneDietaryRestrictions couple')
-      .populate('couple', '_id name1 name2 weddingDate');
+      .populate('couple', '_id name name1 name2 weddingDate');
 
     if (!guest) {
       return NextResponse.json({ message: 'Guest not found' }, { status: 404 });

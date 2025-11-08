@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodb';
-import Tag from '@/lib/models/Tag';
+import Tag, { ITag } from '@/lib/models/Tag';
 import { verifyAuth } from '@/lib/auth';
 import mongoose from 'mongoose';
 
@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest) {
     const newTag = await Tag.findOne({
       _id: newTagId,
       ...(coupleId ? { couple: coupleId } : {})
-    });
+    }) as ITag | null;
 
     if (!newTag) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const currentTag = await Tag.findOne({ users: userId, couple: newTag.couple });
+    const currentTag = await Tag.findOne({ users: userId, couple: newTag.couple }) as ITag | null;
 
     if (currentTag && currentTag._id.equals(newTag._id)) {
       return NextResponse.json({ message: 'User already assigned to this tag' });

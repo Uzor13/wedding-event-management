@@ -13,8 +13,8 @@ if (!MONGODB_URI) {
  */
 declare global {
   var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
+    conn: any;
+    promise: Promise<any> | null;
   };
 }
 
@@ -34,9 +34,9 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
       console.log('Connected to MongoDB');
-      return mongoose;
+      return mongooseInstance;
     });
   }
 

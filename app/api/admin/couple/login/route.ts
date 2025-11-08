@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import dbConnect from '@/lib/db/mongodb';
-import Couple from '@/lib/models/Couple';
+import Couple, { ICouple } from '@/lib/models/Couple';
 import { generateToken } from '@/lib/auth';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
     const { username, password } = await request.json();
 
-    const couple = await Couple.findOne({ username });
+    const couple = await Couple.findOne({ username }) as ICouple | null;
     if (!couple) {
       return NextResponse.json(
         { message: 'Invalid credentials' },

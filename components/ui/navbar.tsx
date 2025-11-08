@@ -144,10 +144,11 @@ const NavBar = () => {
 
                   {openDropdown === menu.id && (
                     <div
-                      className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+                      className="absolute top-full left-0 pt-1 w-48"
                       onMouseEnter={() => setOpenDropdown(menu.id)}
                       onMouseLeave={() => setOpenDropdown(null)}
                     >
+                      <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-1">
                       {menu.items.map((item) => (
                         <Link
                           key={item.href}
@@ -162,6 +163,7 @@ const NavBar = () => {
                           {item.label}
                         </Link>
                       ))}
+                      </div>
                     </div>
                   )}
                 </div>

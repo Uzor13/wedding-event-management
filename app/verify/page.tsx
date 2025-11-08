@@ -242,7 +242,6 @@ export default function VerifyGuest() {
                           );
                         }}
                         components={{
-                          audio: false,
                           finder: true
                         }}
                         styles={{

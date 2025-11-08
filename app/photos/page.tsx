@@ -41,7 +41,7 @@ export default function PhotoGallery() {
     title: '',
     description: '',
     imageUrl: '',
-    category: 'other' as const,
+    category: 'other',
     featured: false
   });
   const router = useRouter();

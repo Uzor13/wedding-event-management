@@ -16,7 +16,7 @@ import {
   Users, Search, Filter, Download, Trash2, Send,
   Edit, Copy, Check, X, ChevronLeft, ChevronRight,
   Mail, Tag as TagIcon, AlertCircle, MoreVertical,
-  CheckSquare, Square, FileText
+  CheckSquare, Square, FileText, Plus
 } from 'lucide-react';
 import React from 'react';
 
@@ -35,6 +35,10 @@ interface Guest {
   code: string;
   isUsed: boolean;
   tags: Tag[];
+  plusOneAllowed: boolean;
+  plusOneName?: string;
+  plusOnePhone?: string;
+  plusOneRsvp?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -522,14 +526,23 @@ export default function GuestList() {
                 {selectedGuests.size > 0 && ` • ${selectedGuests.size} selected`}
               </p>
             </div>
-            <button
-              onClick={exportGuests}
-              disabled={filteredGuests.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Add Guest
+              </button>
+              <button
+                onClick={exportGuests}
+                disabled={filteredGuests.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            </div>
           </div>
         </div>
 
@@ -643,6 +656,7 @@ export default function GuestList() {
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Phone</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">RSVP</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Verified</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Plus One</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Tags</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
                         </tr>
@@ -691,6 +705,28 @@ export default function GuestList() {
                                 >
                                   {guest.isUsed ? 'Yes' : 'No'}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                {guest.plusOneAllowed ? (
+                                  guest.plusOneName ? (
+                                    <div className="text-sm">
+                                      <p className="font-medium text-gray-900">{guest.plusOneName}</p>
+                                      <span
+                                        className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                          guest.plusOneRsvp
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-orange-100 text-orange-700'
+                                        }`}
+                                      >
+                                        {guest.plusOneRsvp ? 'Confirmed' : 'Pending'}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">Allowed, not added</span>
+                                  )
+                                ) : (
+                                  <span className="text-gray-400 text-xs">Not allowed</span>
+                                )}
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex flex-wrap gap-1">
@@ -843,6 +879,24 @@ export default function GuestList() {
                             );
                           })}
                         </div>
+
+                        {guest.plusOneAllowed && guest.plusOneName && (
+                          <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+                            <p className="text-xs text-gray-500 mb-1">Plus One:</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-gray-900">{guest.plusOneName}</p>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  guest.plusOneRsvp
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-orange-100 text-orange-700'
+                                }`}
+                              >
+                                {guest.plusOneRsvp ? 'Confirmed' : 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex gap-2">
                           <button

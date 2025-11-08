@@ -40,7 +40,7 @@ export default function EventsPage() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
     eventName: '',
-    eventType: 'ceremony' as const,
+    eventType: 'ceremony',
     date: '',
     time: '',
     venueName: '',

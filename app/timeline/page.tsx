@@ -38,7 +38,7 @@ export default function TimelineBuilder() {
     description: '',
     time: '',
     duration: '',
-    category: 'ceremony' as const,
+    category: 'ceremony',
     order: 0
   });
   const router = useRouter();

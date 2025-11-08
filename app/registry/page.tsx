@@ -44,7 +44,7 @@ export default function GiftRegistry() {
     quantity: '1',
     purchaseLink: '',
     imageUrl: '',
-    priority: 'medium' as const
+    priority: 'medium'
   });
   const router = useRouter();
   const currentCoupleId = isAdmin ? selectedCoupleId : coupleId;

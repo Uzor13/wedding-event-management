@@ -153,13 +153,26 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Date TBD';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Date TBD';
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const getCoupleNames = () => {
+    if (guest?.couple?.name1 && guest?.couple?.name2) {
+      return `${guest.couple.name1} & ${guest.couple.name2}`;
+    }
+    // Fallback to the populated couple.name if name1/name2 don't exist
+    if (guest?.couple && 'name' in guest.couple) {
+      return (guest.couple as any).name;
+    }
+    return 'The Happy Couple';
   };
 
   if (loading) {
@@ -190,11 +203,11 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
         <div className="text-center mb-8">
           <Heart className="w-16 h-16 text-pink-500 mx-auto mb-4" />
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {guest.couple.name1} & {guest.couple.name2}
+            {getCoupleNames()}
           </h1>
           <p className="text-xl text-gray-600">are getting married!</p>
           <p className="text-lg text-indigo-600 mt-2">
-            {formatDate(guest.couple.weddingDate)}
+            {formatDate(guest.couple?.weddingDate)}
           </p>
         </div>
 
