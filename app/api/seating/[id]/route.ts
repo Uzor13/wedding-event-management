@@ -19,11 +19,21 @@ export async function PUT(
     const { tableNumber, seatNumber } = await request.json();
 
     const updateData: any = {};
-    if (tableNumber !== undefined && tableNumber !== '') {
-      updateData.tableNumber = parseInt(tableNumber) || undefined;
+    if (tableNumber !== undefined) {
+      if (tableNumber === '' || tableNumber === null) {
+        updateData.tableNumber = null;
+      } else {
+        const parsed = parseInt(tableNumber);
+        updateData.tableNumber = isNaN(parsed) ? null : parsed;
+      }
     }
-    if (seatNumber !== undefined && seatNumber !== '') {
-      updateData.seatNumber = parseInt(seatNumber) || undefined;
+    if (seatNumber !== undefined) {
+      if (seatNumber === '' || seatNumber === null) {
+        updateData.seatNumber = null;
+      } else {
+        const parsed = parseInt(seatNumber);
+        updateData.seatNumber = isNaN(parsed) ? null : parsed;
+      }
     }
 
     const guest = await Guest.findByIdAndUpdate(

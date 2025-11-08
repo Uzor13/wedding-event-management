@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
       .populate('tags', 'name color')
       .sort({ createdAt: -1 });
 
+    // Log first guest to check plusOneAllowed
+    if (guests.length > 0) {
+      console.log('First guest plusOneAllowed:', guests[0].plusOneAllowed, 'Name:', guests[0].name);
+    }
+
     return NextResponse.json(guests);
   } catch (error: any) {
     return NextResponse.json(

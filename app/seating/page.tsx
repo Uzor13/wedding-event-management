@@ -55,8 +55,11 @@ export default function SeatingPlanner() {
           params: isAdmin ? { coupleId: currentCoupleId } : {}
         }
       );
+      console.log('Seating guests received:', response.data.length, 'guests');
+      console.log('First guest:', response.data[0]);
       setGuests(response.data);
     } catch (error) {
+      console.error('Seating fetch error:', error);
       toast.error('Failed to load seating data');
     } finally {
       setLoading(false);
@@ -68,8 +71,14 @@ export default function SeatingPlanner() {
 
     if (!editingGuest) return;
 
+    console.log('Submitting seating:', {
+      guestId: editingGuest._id,
+      tableNumber: formData.tableNumber,
+      seatNumber: formData.seatNumber
+    });
+
     try {
-      await axios.put(
+      const response = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/seating/${editingGuest._id}`,
         {
           tableNumber: formData.tableNumber ? parseInt(formData.tableNumber) : undefined,
@@ -78,11 +87,14 @@ export default function SeatingPlanner() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log('Seating update response:', response.data);
+
       toast.success('Seating updated!');
       setEditingGuest(null);
       setFormData({ tableNumber: '', seatNumber: '' });
-      fetchGuests();
+      await fetchGuests();
     } catch (error) {
+      console.error('Seating update error:', error);
       toast.error('Failed to update seating');
     }
   };

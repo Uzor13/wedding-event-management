@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
       mealPreference,
       dietaryRestrictions
     } = await request.json();
+
+    console.log('Received plusOneAllowed:', plusOneAllowed, 'Type:', typeof plusOneAllowed);
+
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 
     if (!coupleId) {
@@ -67,6 +70,8 @@ export async function POST(request: NextRequest) {
     });
 
     await guest.save();
+
+    console.log('Saved guest plusOneAllowed:', guest.plusOneAllowed);
 
     return NextResponse.json(
       { guest, uniqueLink, code },
