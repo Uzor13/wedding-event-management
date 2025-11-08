@@ -30,11 +30,6 @@ budgetItemSchema.index({ couple: 1 });
 budgetItemSchema.index({ category: 1, couple: 1 });
 budgetItemSchema.index({ paid: 1, couple: 1 });
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.BudgetItem) {
-  delete mongoose.models.BudgetItem;
-}
-
-const BudgetItem: Model<IBudgetItem> = mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema);
+const BudgetItem: Model<IBudgetItem> = (mongoose.models.BudgetItem as Model<IBudgetItem>) || mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema);
 
 export default BudgetItem;

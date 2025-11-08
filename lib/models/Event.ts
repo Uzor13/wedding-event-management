@@ -41,11 +41,6 @@ eventSchema.index({ couple: 1 });
 eventSchema.index({ date: 1, couple: 1 });
 eventSchema.index({ eventType: 1, couple: 1 });
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.Event) {
-  delete mongoose.models.Event;
-}
-
-const Event: Model<IEvent> = mongoose.model<IEvent>('Event', eventSchema);
+const Event: Model<IEvent> = (mongoose.models.Event as Model<IEvent>) || mongoose.model<IEvent>('Event', eventSchema);
 
 export default Event;

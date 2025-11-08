@@ -21,11 +21,6 @@ const messageSchema = new Schema<IMessage>({
 messageSchema.index({ couple: 1, approved: 1 });
 messageSchema.index({ couple: 1, createdAt: -1 });
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.Message) {
-  delete mongoose.models.Message;
-}
-
-const Message: Model<IMessage> = mongoose.model<IMessage>('Message', messageSchema);
+const Message: Model<IMessage> = (mongoose.models.Message as Model<IMessage>) || mongoose.model<IMessage>('Message', messageSchema);
 
 export default Message;

@@ -28,11 +28,6 @@ const timelineItemSchema = new Schema<ITimelineItem>({
 
 timelineItemSchema.index({ couple: 1, order: 1 });
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.TimelineItem) {
-  delete mongoose.models.TimelineItem;
-}
-
-const TimelineItem: Model<ITimelineItem> = mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema);
+const TimelineItem: Model<ITimelineItem> = (mongoose.models.TimelineItem as Model<ITimelineItem>) || mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema);
 
 export default TimelineItem;

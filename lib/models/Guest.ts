@@ -67,11 +67,6 @@ guestSchema.index({ isUsed: 1, couple: 1 }); // For filtering verified guests
 guestSchema.index({ name: 1, couple: 1 }); // For search and sorting by name
 guestSchema.index({ tags: 1 }); // For tag-based queries
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.Guest) {
-  delete mongoose.models.Guest;
-}
-
-const Guest: Model<IGuest> = mongoose.model<IGuest>('Guest', guestSchema);
+const Guest: Model<IGuest> = (mongoose.models.Guest as Model<IGuest>) || mongoose.model<IGuest>('Guest', guestSchema);
 
 export default Guest;

@@ -36,11 +36,6 @@ photoSchema.index({ couple: 1, category: 1 });
 photoSchema.index({ couple: 1, createdAt: -1 });
 photoSchema.index({ couple: 1, order: 1 });
 
-// Delete the model from cache if it exists to ensure clean registration
-if (mongoose.models.Photo) {
-  delete mongoose.models.Photo;
-}
-
-const Photo: Model<IPhoto> = mongoose.model<IPhoto>('Photo', photoSchema);
+const Photo: Model<IPhoto> = (mongoose.models.Photo as Model<IPhoto>) || mongoose.model<IPhoto>('Photo', photoSchema);
 
 export default Photo;
