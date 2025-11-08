@@ -21,6 +21,10 @@ const messageSchema = new Schema<IMessage>({
 messageSchema.index({ couple: 1, approved: 1 });
 messageSchema.index({ couple: 1, createdAt: -1 });
 
-const Message = (mongoose.models.Message as Model<IMessage>) || mongoose.model<IMessage>('Message', messageSchema);
+declare global {
+  var Message: Model<IMessage> | undefined;
+}
+
+const Message = global.Message || (global.Message = mongoose.model<IMessage>('Message', messageSchema));
 
 export default Message;

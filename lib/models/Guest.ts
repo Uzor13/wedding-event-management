@@ -67,6 +67,10 @@ guestSchema.index({ isUsed: 1, couple: 1 }); // For filtering verified guests
 guestSchema.index({ name: 1, couple: 1 }); // For search and sorting by name
 guestSchema.index({ tags: 1 }); // For tag-based queries
 
-const Guest = (mongoose.models.Guest as Model<IGuest>) || mongoose.model<IGuest>('Guest', guestSchema);
+declare global {
+  var Guest: Model<IGuest> | undefined;
+}
+
+const Guest = global.Guest || (global.Guest = mongoose.model<IGuest>('Guest', guestSchema));
 
 export default Guest;

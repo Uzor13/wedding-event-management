@@ -28,6 +28,10 @@ const timelineItemSchema = new Schema<ITimelineItem>({
 
 timelineItemSchema.index({ couple: 1, order: 1 });
 
-const TimelineItem = (mongoose.models.TimelineItem as Model<ITimelineItem>) || mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema);
+declare global {
+  var TimelineItem: Model<ITimelineItem> | undefined;
+}
+
+const TimelineItem = global.TimelineItem || (global.TimelineItem = mongoose.model<ITimelineItem>('TimelineItem', timelineItemSchema));
 
 export default TimelineItem;

@@ -25,6 +25,10 @@ const coupleSchema = new Schema<ICouple>({
   eventTitle: { type: String, default: 'Wedding Invitation' }
 }, { timestamps: true });
 
-const Couple = (mongoose.models.Couple as Model<ICouple>) || mongoose.model<ICouple>('Couple', coupleSchema);
+declare global {
+  var Couple: Model<ICouple> | undefined;
+}
+
+const Couple = global.Couple || (global.Couple = mongoose.model<ICouple>('Couple', coupleSchema));
 
 export default Couple;

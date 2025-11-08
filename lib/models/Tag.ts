@@ -32,6 +32,10 @@ const tagSchema = new Schema<ITag>({
 
 tagSchema.index({ name: 1, couple: 1 }, { unique: true });
 
-const Tag = (mongoose.models.Tag as Model<ITag>) || mongoose.model<ITag>('Tag', tagSchema);
+declare global {
+  var Tag: Model<ITag> | undefined;
+}
+
+const Tag = global.Tag || (global.Tag = mongoose.model<ITag>('Tag', tagSchema));
 
 export default Tag;
