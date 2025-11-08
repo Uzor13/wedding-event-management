@@ -250,7 +250,7 @@ export default function VerifyGuest() {
                         }}
                       />
                       {verifying && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center">
                           <Spinner size="lg" />
                         </div>
                       )}

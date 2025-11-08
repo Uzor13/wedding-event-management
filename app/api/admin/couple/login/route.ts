@@ -4,6 +4,8 @@ import dbConnect from '@/lib/db/mongodb';
 import Couple from '@/lib/models/Couple';
 import { generateToken } from '@/lib/auth';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();

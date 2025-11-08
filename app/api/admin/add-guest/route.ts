@@ -17,7 +17,15 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    const { name, phoneNumber, coupleId: bodyCoupleId } = await request.json();
+    const {
+      name,
+      phoneNumber,
+      coupleId: bodyCoupleId,
+      plusOneAllowed,
+      plusOneName,
+      mealPreference,
+      dietaryRestrictions
+    } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 
     if (!coupleId) {
@@ -51,7 +59,11 @@ export async function POST(request: NextRequest) {
       uniqueId,
       qrCode: qrcode,
       code,
-      couple: coupleId
+      couple: coupleId,
+      plusOneAllowed: plusOneAllowed || false,
+      plusOneName: plusOneName || undefined,
+      mealPreference: mealPreference || undefined,
+      dietaryRestrictions: dietaryRestrictions || undefined
     });
 
     await guest.save();

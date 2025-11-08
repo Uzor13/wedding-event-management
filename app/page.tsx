@@ -29,6 +29,10 @@ export default function GuestForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [plusOneAllowed, setPlusOneAllowed] = useState(false);
+  const [plusOneName, setPlusOneName] = useState('');
+  const [mealPreference, setMealPreference] = useState('');
+  const [dietaryRestrictions, setDietaryRestrictions] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -141,7 +145,11 @@ export default function GuestForm() {
         {
           name,
           phoneNumber,
-          coupleId: targetCoupleId
+          coupleId: targetCoupleId,
+          plusOneAllowed,
+          plusOneName: plusOneAllowed ? plusOneName : undefined,
+          mealPreference,
+          dietaryRestrictions
         },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -164,6 +172,10 @@ export default function GuestForm() {
       setName('');
       setPhoneNumber('');
       setSelectedTags([]);
+      setPlusOneAllowed(false);
+      setPlusOneName('');
+      setMealPreference('');
+      setDietaryRestrictions('');
     } catch (error: any) {
       if (error.response?.status === 401) {
         router.push('/login');
@@ -237,6 +249,71 @@ export default function GuestForm() {
             />
             {phoneError && (
               <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="mealPreference">
+              Meal Preference (Optional)
+            </label>
+            <select
+              className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+              id="mealPreference"
+              value={mealPreference}
+              onChange={(event) => setMealPreference(event.target.value)}
+            >
+              <option value="">Select preference</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="non-vegetarian">Non-Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="pescatarian">Pescatarian</option>
+              <option value="halal">Halal</option>
+              <option value="kosher">Kosher</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dietaryRestrictions">
+              Dietary Restrictions (Optional)
+            </label>
+            <input
+              className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+              id="dietaryRestrictions"
+              type="text"
+              value={dietaryRestrictions}
+              onChange={(event) => setDietaryRestrictions(event.target.value)}
+              placeholder="e.g., Gluten-free, Nut allergy"
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={plusOneAllowed}
+                onChange={(e) => setPlusOneAllowed(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <span className="ml-2 text-gray-700 text-sm font-bold">
+                Allow Plus-One
+              </span>
+            </label>
+
+            {plusOneAllowed && (
+              <div className="mt-3 ml-6 space-y-3">
+                <div>
+                  <label className="block text-gray-700 text-sm mb-1">
+                    Plus-One Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={plusOneName}
+                    onChange={(e) => setPlusOneName(e.target.value)}
+                    placeholder="Guest's companion name"
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+              </div>
             )}
           </div>
 
