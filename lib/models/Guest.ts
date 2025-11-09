@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import '@/lib/models/Couple';
+import '@/lib/models/Tag';
 
 export interface IGuest extends Document {
   name: string;
