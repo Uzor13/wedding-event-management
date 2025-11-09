@@ -2,8 +2,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 import Couple from '@/lib/models/Couple';
 import Tag from '@/lib/models/Tag';
 
-declare const __ensureCoupleModel: string;
-declare const __ensureTagModel: string;
+const __ensureCoupleModel = Couple.modelName;
+const __ensureTagModel = Tag.modelName;
 
 export interface IGuest extends Document {
   name: string;
@@ -78,7 +78,7 @@ declare global {
 
 const Guest = mongoose.models.Guest || global.Guest || (global.Guest = mongoose.model<IGuest>('Guest', guestSchema));
 
-void (__ensureCoupleModel ?? Couple.modelName);
-void (__ensureTagModel ?? Tag.modelName);
+void __ensureCoupleModel;
+void __ensureTagModel;
 
 export default Guest;
