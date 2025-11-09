@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function DELETE(
@@ -16,8 +15,6 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
-
     const { phoneNumber } = await params;
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
@@ -31,10 +28,12 @@ export async function DELETE(
 
     const filter: any = { phoneNumber };
     if (coupleId) {
-      filter.couple = coupleId;
+      filter.coupleId = coupleId;
     }
 
-    const guest = await Guest.findOneAndDelete(filter);
+    const guest = await prisma.guest.findFirst({
+      where: filter
+    });
 
     if (!guest) {
       return NextResponse.json(
@@ -42,6 +41,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    await prisma.guest.delete({
+      where: { id: guest.id }
+    });
 
     return NextResponse.json({
       code: 200,

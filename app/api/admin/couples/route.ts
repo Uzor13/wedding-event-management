@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import dbConnect from '@/lib/db/mongodb';
-import Couple from '@/lib/models/Couple';
-import Setting from '@/lib/models/Setting';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 function generateCredentials(name: string) {
@@ -24,8 +22,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-    const couples = await Couple.find().select('-password').sort({ createdAt: -1 });
+    const couples = await prisma.couple.findMany({
+      select: {
+        id: true,
+        name: true,
+        weddingDate: true,
+        email: true,
+        username: true,
+        eventTitle: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     return NextResponse.json(couples);
   } catch (error: any) {
@@ -46,12 +55,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
-    const { name, email } = await request.json();
+    const { name, email, weddingDate } = await request.json();
     if (!name) {
       return NextResponse.json(
-        { message: 'Name is required' },
+        { message: 'Couple name is required' },
         { status: 400 }
       );
     }
@@ -59,22 +66,26 @@ export async function POST(request: NextRequest) {
     const { username, password } = generateCredentials(name);
     const hash = await bcrypt.hash(password, 10);
 
-    const couple = await Couple.create({
-      name,
-      email,
-      username,
-      password: hash
+    const couple = await prisma.couple.create({
+      data: {
+        name,
+        weddingDate: weddingDate ? new Date(weddingDate) : undefined,
+        email: email || undefined,
+        username,
+        password: hash
+      }
     });
 
-    await Setting.findOneAndUpdate(
-      { couple: couple._id },
-      { $setOnInsert: { couple: couple._id } },
-      { upsert: true, new: true }
-    );
+    // Create default settings for this couple
+    await prisma.setting.create({
+      data: {
+        coupleId: couple.id
+      }
+    });
 
     return NextResponse.json({
       couple: {
-        _id: couple._id.toString(),
+        id: couple.id,
         name: couple.name,
         email: couple.email,
         username: couple.username,
@@ -83,7 +94,7 @@ export async function POST(request: NextRequest) {
       credentials: { username, password }
     }, { status: 201 });
   } catch (error: any) {
-    if (error.code === 11000) {
+    if (error.code === 'P2002') {
       return NextResponse.json(
         { message: 'Couple already exists' },
         { status: 409 }

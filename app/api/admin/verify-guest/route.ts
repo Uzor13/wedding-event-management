@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -13,20 +12,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const { uniqueId, code, coupleId: bodyCoupleId } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 
-    const filter: any = {
-      $or: [{ uniqueId }, { code }]
+    const where: any = {
+      OR: [
+        { uniqueId: uniqueId || '' },
+        { code: code || '' }
+      ]
     };
 
     if (coupleId) {
-      filter.couple = coupleId;
+      where.coupleId = coupleId;
     }
 
-    const guest = await Guest.findOne(filter);
+    const guest = await prisma.guest.findFirst({
+      where,
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
 
     if (!guest) {
       return NextResponse.json(
@@ -39,9 +50,6 @@ export async function POST(request: NextRequest) {
     const wasAlreadyUsed = guest.isUsed;
 
     if (wasAlreadyUsed) {
-      // Populate tags even for already-used guests
-      await guest.populate('tags');
-
       return NextResponse.json({
         success: true,
         message: 'This guest has already been verified',
@@ -51,30 +59,40 @@ export async function POST(request: NextRequest) {
         uniqueId: guest.uniqueId,
         rsvpStatus: guest.rsvpStatus,
         isUsed: true,
-        tags: guest.tags?.map((tag: any) => ({
+        tags: guest.tags?.map((tag) => ({
           name: tag.name,
           color: tag.color
         })) || []
       });
     }
 
-    guest.isUsed = true;
-    guest.rsvpStatus = true;
-    await guest.save();
-
-    // Populate tags to include in response
-    await guest.populate('tags');
+    const updatedGuest = await prisma.guest.update({
+      where: { id: guest.id },
+      data: {
+        isUsed: true,
+        rsvpStatus: true
+      },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Verification successful',
-      name: guest.name,
-      phoneNumber: guest.phoneNumber,
-      code: guest.code,
-      uniqueId: guest.uniqueId,
-      rsvpStatus: guest.rsvpStatus,
+      name: updatedGuest.name,
+      phoneNumber: updatedGuest.phoneNumber,
+      code: updatedGuest.code,
+      uniqueId: updatedGuest.uniqueId,
+      rsvpStatus: updatedGuest.rsvpStatus,
       isUsed: false, // Return false on first scan for proper UI feedback
-      tags: guest.tags?.map((tag: any) => ({
+      tags: updatedGuest.tags?.map((tag) => ({
         name: tag.name,
         color: tag.color
       })) || []

@@ -14,12 +14,23 @@ import {
 } from 'lucide-react';
 
 interface Couple {
-  _id: string;
+  id: string;
   name: string;
+  weddingDate?: string;
   email?: string;
   username: string;
   eventTitle?: string;
   createdAt: string;
+}
+
+interface CoupleSettings {
+  enableTimeline: boolean;
+  enableMessages: boolean;
+  enableEvents: boolean;
+  enableRegistry: boolean;
+  enablePhotos: boolean;
+  enableBudget: boolean;
+  enableSeating: boolean;
 }
 
 interface CoupleCredentials {
@@ -41,8 +52,18 @@ export default function CouplesManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    weddingDate: '',
     email: '',
     password: ''
+  });
+  const [coupleSettings, setCoupleSettings] = useState<CoupleSettings>({
+    enableTimeline: false,
+    enableMessages: false,
+    enableEvents: false,
+    enableRegistry: false,
+    enablePhotos: false,
+    enableBudget: true,
+    enableSeating: true
   });
 
   const router = useRouter();
@@ -87,7 +108,11 @@ export default function CouplesManagement() {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples`,
-        { name: formData.name, email: formData.email },
+        {
+          name: formData.name,
+          weddingDate: formData.weddingDate || undefined,
+          email: formData.email || undefined
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -96,7 +121,7 @@ export default function CouplesManagement() {
       setShowAddDialog(false);
       await fetchCouples();
       toast.success('Couple added successfully!');
-      setFormData({ name: '', email: '', password: '' });
+      setFormData({ name: '', weddingDate: '', email: '', password: '' });
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to add couple');
     } finally {
@@ -111,20 +136,32 @@ export default function CouplesManagement() {
     setSubmitting(true);
 
     try {
+      // Update couple info
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples/${selectedCouple._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples/${selectedCouple.id}`,
         {
           name: formData.name,
-          email: formData.email,
+          weddingDate: formData.weddingDate || undefined,
+          email: formData.email || undefined,
           ...(formData.password ? { password: formData.password } : {})
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update feature flags in settings
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/settings`,
+        {
+          coupleId: selectedCouple.id,
+          ...coupleSettings
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setShowEditDialog(false);
       await fetchCouples();
-      toast.success('Couple updated successfully!');
-      setFormData({ name: '', email: '', password: '' });
+      toast.success('Couple and settings updated successfully!');
+      setFormData({ name: '', weddingDate: '', email: '', password: '' });
       setSelectedCouple(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to update couple');
@@ -140,7 +177,7 @@ export default function CouplesManagement() {
 
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples/${selectedCouple._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples/${selectedCouple.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -155,13 +192,50 @@ export default function CouplesManagement() {
     }
   };
 
-  const openEditDialog = (couple: Couple) => {
+  const openEditDialog = async (couple: Couple) => {
     setSelectedCouple(couple);
     setFormData({
       name: couple.name,
+      weddingDate: couple.weddingDate ? new Date(couple.weddingDate).toISOString().split('T')[0] : '',
       email: couple.email || '',
       password: ''
     });
+
+    // Fetch current settings for this couple
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/settings`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { coupleId: couple.id }
+        }
+      );
+
+      if (response.data) {
+        setCoupleSettings({
+          enableTimeline: response.data.enableTimeline ?? false,
+          enableMessages: response.data.enableMessages ?? false,
+          enableEvents: response.data.enableEvents ?? false,
+          enableRegistry: response.data.enableRegistry ?? false,
+          enablePhotos: response.data.enablePhotos ?? false,
+          enableBudget: response.data.enableBudget ?? true,
+          enableSeating: response.data.enableSeating ?? true
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+      // Use defaults if settings don't exist yet
+      setCoupleSettings({
+        enableTimeline: false,
+        enableMessages: false,
+        enableEvents: false,
+        enableRegistry: false,
+        enablePhotos: false,
+        enableBudget: true,
+        enableSeating: true
+      });
+    }
+
     setShowEditDialog(true);
   };
 
@@ -207,7 +281,7 @@ export default function CouplesManagement() {
             </div>
             <button
               onClick={() => {
-                setFormData({ name: '', email: '', password: '' });
+                setFormData({ name: '', weddingDate: '', email: '', password: '' });
                 setShowAddDialog(true);
               }}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
@@ -220,9 +294,9 @@ export default function CouplesManagement() {
 
         {couples.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {couples.map((couple) => (
+            {couples.map((couple, index) => (
               <div
-                key={couple._id}
+                key={index}
                 className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -231,7 +305,9 @@ export default function CouplesManagement() {
                       <Users className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg text-gray-900">{couple.name}</h3>
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        {couple.name}
+                      </h3>
                       <p className="text-sm text-gray-500">
                         {new Date(couple.createdAt).toLocaleDateString()}
                       </p>
@@ -240,6 +316,12 @@ export default function CouplesManagement() {
                 </div>
 
                 <div className="space-y-2 mb-4">
+                  {couple.weddingDate && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(couple.weddingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                  )}
                   {couple.email && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Mail className="w-4 h-4" />
@@ -250,12 +332,6 @@ export default function CouplesManagement() {
                     <User className="w-4 h-4" />
                     <span className="font-mono">{couple.username}</span>
                   </div>
-                  {couple.eventTitle && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{couple.eventTitle}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -308,8 +384,20 @@ export default function CouplesManagement() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="John & Jane Doe"
+                  placeholder="John & Jane"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Wedding Date (optional)
+                </label>
+                <input
+                  type="date"
+                  value={formData.weddingDate}
+                  onChange={(e) => setFormData({ ...formData, weddingDate: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -386,6 +474,18 @@ export default function CouplesManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Wedding Date (optional)
+                </label>
+                <input
+                  type="date"
+                  value={formData.weddingDate}
+                  onChange={(e) => setFormData({ ...formData, weddingDate: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email (optional)
                 </label>
                 <input
@@ -407,6 +507,76 @@ export default function CouplesManagement() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Leave empty to keep current password"
                 />
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Enabled Features</h3>
+                <p className="text-xs text-gray-600 mb-4">Control which features are available for this couple</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableTimeline}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableTimeline: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Timeline</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableMessages}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableMessages: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Messages</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableEvents}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableEvents: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Events</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableRegistry}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableRegistry: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Gift Registry</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enablePhotos}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enablePhotos: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Photos</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableBudget}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableBudget: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Budget</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={coupleSettings.enableSeating}
+                      onChange={(e) => setCoupleSettings({ ...coupleSettings, enableSeating: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Seating</span>
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-3 justify-end">

@@ -1,33 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
-import Event from '@/lib/models/Event';
+import prisma from '@/lib/db/prisma';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
-    await dbConnect();
     const { uniqueId } = await params;
 
-    const guest = await Guest.findOne({ uniqueId })
-      .select('name phoneNumber uniqueId rsvpStatus plusOneAllowed plusOneName plusOnePhone plusOneRsvp mealPreference plusOneMealPreference dietaryRestrictions plusOneDietaryRestrictions couple')
-      .populate('couple', '_id name name1 name2 weddingDate');
+    const guest = await prisma.guest.findUnique({
+      where: { uniqueId },
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        uniqueId: true,
+        code: true,
+        rsvpStatus: true,
+        plusOneAllowed: true,
+        plusOneName: true,
+        plusOnePhone: true,
+        plusOneRsvp: true,
+        mealPreference: true,
+        plusOneMealPreference: true,
+        dietaryRestrictions: true,
+        plusOneDietaryRestrictions: true,
+        coupleId: true,
+        couple: {
+          select: {
+            id: true,
+            name: true,
+            weddingDate: true
+          }
+        }
+      }
+    });
 
     if (!guest) {
       return NextResponse.json({ message: 'Guest not found' }, { status: 404 });
     }
 
-    // Get events for this couple
-    const events = await Event.find({
-      couple: guest.couple,
-      guestList: guest._id
-    }).select('eventName eventType date time venueName venueAddress dressCode isMainEvent');
+    // Get events for this couple where this guest is invited
+    const events = await prisma.event.findMany({
+      where: {
+        coupleId: guest.coupleId,
+        guests: {
+          some: {
+            id: guest.id
+          }
+        }
+      },
+      select: {
+        id: true,
+        eventName: true,
+        eventType: true,
+        date: true,
+        time: true,
+        venueName: true,
+        venueAddress: true,
+        dressCode: true,
+        isMainEvent: true
+      }
+    });
 
     return NextResponse.json({ guest, events });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[Guest GET Error]', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return user-friendly error message
+    return NextResponse.json(
+      { error: 'Unable to load guest information. Please try again later.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -36,7 +85,6 @@ export async function PUT(
   { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
-    await dbConnect();
     const { uniqueId } = await params;
 
     const {
@@ -50,9 +98,9 @@ export async function PUT(
       plusOneDietaryRestrictions
     } = await request.json();
 
-    const guest = await Guest.findOneAndUpdate(
-      { uniqueId },
-      {
+    const guest = await prisma.guest.update({
+      where: { uniqueId },
+      data: {
         rsvpStatus,
         plusOneName,
         plusOnePhone,
@@ -62,15 +110,31 @@ export async function PUT(
         dietaryRestrictions,
         plusOneDietaryRestrictions
       },
-      { new: true }
-    ).select('name rsvpStatus plusOneAllowed plusOneName plusOneRsvp');
-
-    if (!guest) {
-      return NextResponse.json({ message: 'Guest not found' }, { status: 404 });
-    }
+      select: {
+        name: true,
+        rsvpStatus: true,
+        plusOneAllowed: true,
+        plusOneName: true,
+        plusOneRsvp: true
+      }
+    });
 
     return NextResponse.json(guest);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error('[Guest PUT Error]', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return user-friendly error messages
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Guest not found' }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: 'Unable to update RSVP. Please try again later.' },
+      { status: 400 }
+    );
   }
 }

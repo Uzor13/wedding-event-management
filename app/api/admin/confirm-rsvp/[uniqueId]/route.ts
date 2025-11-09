@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function POST(
@@ -16,18 +15,18 @@ export async function POST(
       );
     }
 
-    await dbConnect();
-
     const { uniqueId } = await params;
     const { coupleId: bodyCoupleId } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 
     const filter: any = { uniqueId };
     if (coupleId) {
-      filter.couple = coupleId;
+      filter.coupleId = coupleId;
     }
 
-    const guest = await Guest.findOne(filter);
+    const guest = await prisma.guest.findFirst({
+      where: filter
+    });
 
     if (!guest) {
       return NextResponse.json(
@@ -43,14 +42,18 @@ export async function POST(
       );
     }
 
-    guest.isUsed = true;
-    guest.rsvpStatus = true;
-    await guest.save();
+    const updatedGuest = await prisma.guest.update({
+      where: { id: guest.id },
+      data: {
+        isUsed: true,
+        rsvpStatus: true
+      }
+    });
 
     return NextResponse.json({
       success: true,
       message: 'RSVP and verification successful',
-      guestName: guest.name
+      guestName: updatedGuest.name
     });
   } catch (error: any) {
     return NextResponse.json(

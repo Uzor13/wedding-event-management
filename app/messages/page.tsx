@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { MessageCircle, Check, X, Star, Trash2, Filter } from 'lucide-react';
 
 interface Message {
-  _id: string;
+  id: string;
   guestName: string;
   email?: string;
   message: string;
@@ -63,7 +63,7 @@ export default function MessagesBoard() {
   const toggleApproval = async (message: Message) => {
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/messages/${message._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/messages/${message.id}`,
         { approved: !message.approved, featured: message.featured },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -77,7 +77,7 @@ export default function MessagesBoard() {
   const toggleFeatured = async (message: Message) => {
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/messages/${message._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/messages/${message.id}`,
         { approved: message.approved, featured: !message.featured },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -171,7 +171,7 @@ export default function MessagesBoard() {
           ) : (
             filteredMessages.map((msg) => (
               <div
-                key={msg._id}
+                key={msg.id}
                 className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${
                   msg.featured
                     ? 'border-yellow-500 bg-yellow-50'
@@ -240,7 +240,7 @@ export default function MessagesBoard() {
                       <Star className={`w-5 h-5 ${msg.featured ? 'fill-current' : ''}`} />
                     </button>
                     <button
-                      onClick={() => handleDelete(msg._id)}
+                      onClick={() => handleDelete(msg.id)}
                       className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
                       title="Delete message"
                     >

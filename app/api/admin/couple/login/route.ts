@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import dbConnect from '@/lib/db/mongodb';
-import Couple, { ICouple } from '@/lib/models/Couple';
+import prisma from '@/lib/db/prisma';
 import { generateToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-
     const { username, password } = await request.json();
 
-    const couple = await Couple.findOne({ username }) as ICouple | null;
+    const couple = await prisma.couple.findUnique({
+      where: { username }
+    });
+
     if (!couple) {
       return NextResponse.json(
         { message: 'Invalid credentials' },
@@ -27,24 +27,32 @@ export async function POST(request: NextRequest) {
     }
 
     const token = generateToken({
-      userId: couple._id.toString(),
+      userId: couple.id,
       role: 'couple',
-      coupleId: couple._id.toString()
+      coupleId: couple.id
     });
 
     return NextResponse.json({
       token,
       role: 'couple',
       couple: {
-        id: couple._id.toString(),
+        id: couple.id,
         name: couple.name,
         email: couple.email,
         eventTitle: couple.eventTitle
       }
     });
   } catch (error: any) {
+    console.error('[Couple Login Error]', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return user-friendly error message
     return NextResponse.json(
-      { message: error.message || 'Internal server error' },
+      { message: 'Unable to process login request. Please try again later.' },
       { status: 500 }
     );
   }

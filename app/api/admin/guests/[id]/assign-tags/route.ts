@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
-import Tag from '@/lib/models/Tag';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -16,8 +14,6 @@ export async function PUT(
         { status: 403 }
       );
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const { tagIds } = await request.json();
@@ -34,14 +30,11 @@ export async function PUT(
       ? auth.coupleId
       : searchParams.get('coupleId');
 
-    // Build filter
-    const filter: any = { _id: id };
-    if (coupleId) {
-      filter.couple = coupleId;
-    }
+    // Check if guest exists and belongs to the couple (if specified)
+    const guest = await prisma.guest.findUnique({
+      where: { id }
+    });
 
-    // Find the guest
-    const guest = await Guest.findOne(filter);
     if (!guest) {
       return NextResponse.json(
         { message: 'Guest not found' },
@@ -49,40 +42,42 @@ export async function PUT(
       );
     }
 
-    // Get current tags
-    const currentTagIds = guest.tags.map((t: any) => t.toString());
-
-    // Find tags to remove (in current but not in new)
-    const tagsToRemove = currentTagIds.filter((tagId: string) => !tagIds.includes(tagId));
-
-    // Find tags to add (in new but not in current)
-    const tagsToAdd = tagIds.filter((tagId: string) => !currentTagIds.includes(tagId));
-
-    // Remove guest from tags
-    if (tagsToRemove.length > 0) {
-      await Tag.updateMany(
-        { _id: { $in: tagsToRemove } },
-        { $pull: { users: id } }
+    // Check authorization if coupleId is specified
+    if (coupleId && guest.coupleId !== coupleId) {
+      return NextResponse.json(
+        { message: 'Guest not found or unauthorized' },
+        { status: 404 }
       );
     }
 
-    // Add guest to tags
-    if (tagsToAdd.length > 0) {
-      await Tag.updateMany(
-        { _id: { $in: tagsToAdd } },
-        { $addToSet: { users: id } }
-      );
-    }
-
-    // Update guest's tags
-    guest.tags = tagIds;
-    await guest.save();
-
-    // Return updated guest with populated tags
-    const updatedGuest = await Guest.findById(id).populate('tags', 'name color');
+    // Update guest's tags using Prisma's set operation
+    // This will automatically handle the many-to-many relationship
+    const updatedGuest = await prisma.guest.update({
+      where: { id },
+      data: {
+        tags: {
+          set: tagIds.map((tagId: string) => ({ id: tagId }))
+        }
+      },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
 
     return NextResponse.json(updatedGuest);
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { message: 'Guest not found' },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
       { message: error.message || 'Internal server error' },
       { status: 500 }

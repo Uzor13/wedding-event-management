@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Image as ImageIcon, Plus, Trash2, Star, X } from 'lucide-react';
 
 interface Photo {
-  _id: string;
+  id: string;
   title?: string;
   description?: string;
   imageUrl: string;
@@ -159,7 +159,7 @@ export default function PhotoGallery() {
   const toggleFeatured = async (photo: Photo) => {
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/photos/${photo._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/photos/${photo.id}`,
         { ...photo, featured: !photo.featured },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -238,7 +238,7 @@ export default function PhotoGallery() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {featuredPhotos.map((photo) => (
                 <div
-                  key={photo._id}
+                  key={photo.id}
                   className="relative group bg-white rounded-lg shadow-sm overflow-hidden border-2 border-yellow-400"
                 >
                   <img
@@ -256,7 +256,7 @@ export default function PhotoGallery() {
                       <Star className="w-5 h-5 text-yellow-500 fill-current" />
                     </button>
                     <button
-                      onClick={() => handleDelete(photo._id)}
+                      onClick={() => handleDelete(photo.id)}
                       className="p-2 bg-white rounded-lg hover:bg-gray-100"
                     >
                       <Trash2 className="w-5 h-5 text-red-600" />
@@ -295,7 +295,7 @@ export default function PhotoGallery() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {regularPhotos.map((photo) => (
                 <div
-                  key={photo._id}
+                  key={photo.id}
                   className="relative group bg-white rounded-lg shadow-sm overflow-hidden"
                 >
                   <img
@@ -313,7 +313,7 @@ export default function PhotoGallery() {
                       <Star className="w-5 h-5 text-gray-400" />
                     </button>
                     <button
-                      onClick={() => handleDelete(photo._id)}
+                      onClick={() => handleDelete(photo.id)}
                       className="p-2 bg-white rounded-lg hover:bg-gray-100"
                     >
                       <Trash2 className="w-5 h-5 text-red-600" />

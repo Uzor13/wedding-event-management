@@ -32,11 +32,11 @@ export default function LoginPage() {
         couple: response.data.couple || null
       });
 
+      // Keep loading true during redirect
       router.push('/guests');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only stop loading on error
     }
   };
 

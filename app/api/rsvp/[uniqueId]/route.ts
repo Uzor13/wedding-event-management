@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
-import Setting from '@/lib/models/Setting';
+import prisma from '@/lib/db/prisma';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
-    await dbConnect();
-
     const { uniqueId } = await params;
 
-    const guest = await Guest.findOne({ uniqueId })
-      .populate('couple')
-      .populate('tags');
+    const guest = await prisma.guest.findFirst({
+      where: { uniqueId },
+      include: {
+        couple: true,
+        tags: true
+      }
+    });
 
     if (!guest) {
       return NextResponse.json(
@@ -23,10 +23,12 @@ export async function GET(
       );
     }
 
-    const settings = await Setting.findOne({ couple: guest.couple });
+    const settings = await prisma.setting.findFirst({
+      where: { coupleId: guest.coupleId }
+    });
 
     return NextResponse.json({
-      ...guest.toObject(),
+      ...guest,
       settings
     });
   } catch (error: any) {
@@ -42,11 +44,11 @@ export async function POST(
   { params }: { params: Promise<{ uniqueId: string }> }
 ) {
   try {
-    await dbConnect();
-
     const { uniqueId } = await params;
 
-    const guest = await Guest.findOne({ uniqueId });
+    const guest = await prisma.guest.findFirst({
+      where: { uniqueId }
+    });
 
     if (!guest) {
       return NextResponse.json(
@@ -55,11 +57,13 @@ export async function POST(
       );
     }
 
-    guest.rsvpStatus = true;
-    await guest.save();
+    const updatedGuest = await prisma.guest.update({
+      where: { id: guest.id },
+      data: { rsvpStatus: true }
+    });
 
     return NextResponse.json({
-      guest,
+      guest: updatedGuest,
       success: true
     }, { status: 201 });
   } catch (error: any) {

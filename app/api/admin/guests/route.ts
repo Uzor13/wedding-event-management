@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -13,16 +12,44 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
 
-    const filter = coupleId ? { couple: coupleId } : {};
-    const guests = await Guest.find(filter)
-      .select('-qrCode')
-      .populate('tags', 'name color')
-      .sort({ createdAt: -1 });
+    const where = coupleId ? { coupleId } : {};
+    const guests = await prisma.guest.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        rsvpStatus: true,
+        uniqueId: true,
+        code: true,
+        isUsed: true,
+        plusOneAllowed: true,
+        plusOneName: true,
+        plusOnePhone: true,
+        plusOneRsvp: true,
+        mealPreference: true,
+        plusOneMealPreference: true,
+        dietaryRestrictions: true,
+        plusOneDietaryRestrictions: true,
+        tableName: true,
+        tableNumber: true,
+        seatingAssigned: true,
+        coupleId: true,
+        createdAt: true,
+        updatedAt: true,
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     // Log first guest to check plusOneAllowed
     if (guests.length > 0) {

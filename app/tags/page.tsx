@@ -16,13 +16,13 @@ import {
 } from 'lucide-react';
 
 interface Guest {
-  _id: string;
+  id: string;
   name: string;
   phoneNumber: string;
 }
 
 interface Tag {
-  _id: string;
+  id: string;
   name: string;
   color: string;
   users: Guest[];
@@ -64,7 +64,7 @@ export default function TagManagement() {
         );
         setCouples(response.data);
         if (!selectedCoupleId && response.data.length > 0) {
-          setSelectedCoupleId(response.data[0]._id);
+          setSelectedCoupleId(response.data[0].id);
         }
       } catch (err) {
         console.error(err);
@@ -140,7 +140,7 @@ export default function TagManagement() {
 
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/tags/${selectedTag._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/tags/${selectedTag.id}`,
         { name: formData.name, color: formData.color },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -167,7 +167,7 @@ export default function TagManagement() {
 
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/tags/${selectedTag._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/tags/${selectedTag.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           params: isAdmin && currentCoupleId ? { coupleId: currentCoupleId } : {}
@@ -255,7 +255,7 @@ export default function TagManagement() {
             >
               <option value="">Select couple</option>
               {couples.map((couple) => (
-                <option key={couple._id} value={couple._id}>
+                <option key={couple.id} value={couple.id}>
                   {couple.name}
                 </option>
               ))}
@@ -270,7 +270,7 @@ export default function TagManagement() {
                 const tagColor = tag?.color || '#6366f1';
                 return (
                   <div
-                    key={tag._id || `tag-item-${index}`}
+                    key={tag.id || `tag-item-${index}`}
                     className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -587,7 +587,7 @@ export default function TagManagement() {
                   <div className="max-h-96 overflow-y-auto space-y-2">
                     {selectedTag.users.map((guest) => (
                       <div
-                        key={guest._id}
+                        key={guest.id}
                         className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                       >
                         <div className="p-2 bg-blue-100 rounded-full">

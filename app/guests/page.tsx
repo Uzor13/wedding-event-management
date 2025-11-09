@@ -21,13 +21,13 @@ import {
 import React from 'react';
 
 interface Tag {
-  _id: string;
+  id: string;
   name: string;
   color: string;
 }
 
 interface Guest {
-  _id: string;
+  id: string;
   name: string;
   phoneNumber: string;
   rsvpStatus: boolean;
@@ -92,7 +92,7 @@ export default function GuestList() {
         );
         setCouples(response.data);
         if (!selectedCoupleId && response.data.length > 0) {
-          setSelectedCoupleId(response.data[0]._id);
+          setSelectedCoupleId(response.data[0].id);
         }
       } catch (err) {
         console.error(err);
@@ -165,7 +165,7 @@ export default function GuestList() {
 
       const matchesTag =
         tagFilter === 'all' ||
-        guest.tags.some((tag) => tag._id === tagFilter);
+        guest.tags.some((tag) => tag.id === tagFilter);
 
       return matchesSearch && matchesStatus && matchesTag;
     })
@@ -199,7 +199,7 @@ export default function GuestList() {
     if (selectedGuests.size === paginatedGuests.length) {
       setSelectedGuests(new Set());
     } else {
-      setSelectedGuests(new Set(paginatedGuests.map((g) => g._id)));
+      setSelectedGuests(new Set(paginatedGuests.map((g) => g.id)));
     }
   };
 
@@ -300,7 +300,7 @@ export default function GuestList() {
     setSubmitting(true);
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${selectedGuest._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${selectedGuest.id}`,
         {
           name: editFormData.name,
           phoneNumber: editFormData.phoneNumber
@@ -351,7 +351,7 @@ export default function GuestList() {
     try {
       await Promise.all(
         guestsToDelete.map((guestId) => {
-          const guest = guests.find((g) => g._id === guestId);
+          const guest = guests.find((g) => g.id === guestId);
           if (!guest) return Promise.resolve();
 
           return axios.delete(
@@ -441,7 +441,7 @@ export default function GuestList() {
       await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/send-email`,
         {
-          guestId: selectedGuest._id,
+          guestId: selectedGuest.id,
           email: emailAddress,
           coupleId: currentCoupleId
         },
@@ -471,7 +471,7 @@ export default function GuestList() {
 
   const openAssignTagDialog = (guest: Guest) => {
     setSelectedGuest(guest);
-    setSelectedTagIds(guest.tags?.map(t => t._id) || []);
+    setSelectedTagIds(guest.tags?.map(t => t.id) || []);
     setShowAssignTagDialog(true);
   };
 
@@ -481,7 +481,7 @@ export default function GuestList() {
     setSubmitting(true);
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${selectedGuest._id}/assign-tags`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${selectedGuest.id}/assign-tags`,
         { tagIds: selectedTagIds },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -570,7 +570,7 @@ export default function GuestList() {
             >
               <option value="">Select couple</option>
               {couples.map((couple) => (
-                <option key={couple._id} value={couple._id}>
+                <option key={couple.id} value={couple.id}>
                   {couple.name}
                 </option>
               ))}
@@ -620,7 +620,7 @@ export default function GuestList() {
                   >
                     <option value="all">All Tags</option>
                     {tags.map((tag) => (
-                      <option key={tag._id} value={tag._id}>
+                      <option key={tag.id} value={tag.id}>
                         {tag.name}
                       </option>
                     ))}
@@ -676,13 +676,13 @@ export default function GuestList() {
                         {paginatedGuests.map((guest) => {
                           const link = `${process.env.NEXT_PUBLIC_SITE_LINK}/rsvp/${guest.uniqueId}`;
                           return (
-                            <tr key={guest._id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={guest.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-4 py-3">
                                 <button
-                                  onClick={() => toggleSelectGuest(guest._id)}
+                                  onClick={() => toggleSelectGuest(guest.id)}
                                   className="text-gray-600 hover:text-gray-900"
                                 >
-                                  {selectedGuests.has(guest._id) ? (
+                                  {selectedGuests.has(guest.id) ? (
                                     <CheckSquare className="w-5 h-5 text-blue-600" />
                                   ) : (
                                     <Square className="w-5 h-5" />
@@ -729,7 +729,7 @@ export default function GuestList() {
                                       const tagColor = tag?.color || '#3b82f6';
                                       return (
                                         <span
-                                          key={tag._id || `tag-${guest._id}-${index}`}
+                                          key={tag.id || `tag-${guest.id}-${index}`}
                                           className="px-2 py-1 rounded text-xs"
                                           style={{
                                             backgroundColor: tagColor + '20',
@@ -748,11 +748,11 @@ export default function GuestList() {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <button
-                                    onClick={() => copyToClipboard(link, guest._id)}
+                                    onClick={() => copyToClipboard(link, guest.id)}
                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                     title="Copy RSVP Link"
                                   >
-                                    {copiedId === guest._id ? (
+                                    {copiedId === guest.id ? (
                                       <Check className="w-4 h-4" />
                                     ) : (
                                       <Copy className="w-4 h-4" />
@@ -764,13 +764,6 @@ export default function GuestList() {
                                     title="Send SMS"
                                   >
                                     <Send className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => openEmailDialog(guest)}
-                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                    title="Send Email Invitation"
-                                  >
-                                    <Mail className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => openEditDialog(guest)}
@@ -818,14 +811,14 @@ export default function GuestList() {
                   {paginatedGuests.map((guest) => {
                     const link = `${process.env.NEXT_PUBLIC_SITE_LINK}/rsvp/${guest.uniqueId}`;
                     return (
-                      <div key={guest._id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                      <div key={guest.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start gap-3">
                             <button
-                              onClick={() => toggleSelectGuest(guest._id)}
+                              onClick={() => toggleSelectGuest(guest.id)}
                               className="mt-1"
                             >
-                              {selectedGuests.has(guest._id) ? (
+                              {selectedGuests.has(guest.id) ? (
                                 <CheckSquare className="w-5 h-5 text-blue-600" />
                               ) : (
                                 <Square className="w-5 h-5 text-gray-400" />
@@ -861,7 +854,7 @@ export default function GuestList() {
                             const tagColor = tag?.color || '#3b82f6';
                             return (
                               <span
-                                key={tag._id || `tag-${guest._id}-${index}`}
+                                key={tag.id || `tag-${guest.id}-${index}`}
                                 className="px-2 py-1 rounded text-xs"
                                 style={{
                                   backgroundColor: tagColor + '20',
@@ -894,10 +887,10 @@ export default function GuestList() {
 
                         <div className="flex gap-2">
                           <button
-                            onClick={() => copyToClipboard(link, guest._id)}
+                            onClick={() => copyToClipboard(link, guest.id)}
                             className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm"
                           >
-                            {copiedId === guest._id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {copiedId === guest.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             Copy
                           </button>
                           <button
@@ -1109,17 +1102,17 @@ export default function GuestList() {
                       const tagColor = tag?.color || '#6366f1';
                       return (
                         <button
-                          key={tag._id || `tag-dialog-${index}`}
+                          key={tag.id || `tag-dialog-${index}`}
                           type="button"
-                          onClick={() => toggleTagSelection(tag._id)}
+                          onClick={() => toggleTagSelection(tag.id)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                            selectedTagIds.includes(tag._id)
+                            selectedTagIds.includes(tag.id)
                               ? 'border-indigo-500 bg-indigo-50'
                               : 'border-gray-200 hover:border-gray-300 bg-white'
                           }`}
                         >
                           <div className="flex-shrink-0">
-                            {selectedTagIds.includes(tag._id) ? (
+                            {selectedTagIds.includes(tag.id) ? (
                               <CheckSquare className="w-5 h-5 text-indigo-600" />
                             ) : (
                               <Square className="w-5 h-5 text-gray-400" />

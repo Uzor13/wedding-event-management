@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Users, Edit2, X } from 'lucide-react';
 
 interface Guest {
-  _id: string;
+  id: string;
   name: string;
   phoneNumber: string;
   tableNumber?: number;
@@ -72,14 +72,14 @@ export default function SeatingPlanner() {
     if (!editingGuest) return;
 
     console.log('Submitting seating:', {
-      guestId: editingGuest._id,
+      guestId: editingGuest.id,
       tableNumber: formData.tableNumber,
       seatNumber: formData.seatNumber
     });
 
     try {
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/seating/${editingGuest._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/seating/${editingGuest.id}`,
         {
           tableNumber: formData.tableNumber ? parseInt(formData.tableNumber) : undefined,
           seatNumber: formData.seatNumber ? parseInt(formData.seatNumber) : undefined
@@ -102,7 +102,7 @@ export default function SeatingPlanner() {
   const clearSeating = async (guest: Guest) => {
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/seating/${guest._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/seating/${guest.id}`,
         { tableNumber: undefined, seatNumber: undefined },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -121,6 +121,11 @@ export default function SeatingPlanner() {
     });
   };
 
+  // Helper function to calculate seat count (includes plus ones)
+  const getSeatCount = (guest: Guest): number => {
+    return 1 + (guest.plusOneAllowed && guest.plusOneName ? 1 : 0);
+  };
+
   // Group guests by table
   const groupedByTable = guests.reduce((acc, guest) => {
     if (guest.tableNumber) {
@@ -135,8 +140,10 @@ export default function SeatingPlanner() {
     .map(Number)
     .sort((a, b) => a - b);
 
-  const totalAssigned = guests.filter((g) => g.tableNumber).length;
-  const totalSeats = guests.length;
+  // Count actual seats (including plus ones)
+  const assignedGuests = guests.filter((g) => g.tableNumber);
+  const totalAssignedSeats = assignedGuests.reduce((sum, guest) => sum + getSeatCount(guest), 0);
+  const totalSeatsNeeded = guests.reduce((sum, guest) => sum + getSeatCount(guest), 0);
 
   return (
     <>
@@ -151,9 +158,9 @@ export default function SeatingPlanner() {
             <p className="text-gray-600 mt-1">Arrange guests at tables</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Assigned</p>
+            <p className="text-sm text-gray-600">Seats Assigned</p>
             <p className="text-2xl font-bold text-indigo-600">
-              {totalAssigned} / {totalSeats}
+              {totalAssignedSeats} / {totalSeatsNeeded}
             </p>
           </div>
         </div>
@@ -165,12 +172,14 @@ export default function SeatingPlanner() {
             <p className="text-2xl font-bold text-gray-900">{tableNumbers.length}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-600">Assigned Guests</p>
-            <p className="text-2xl font-bold text-green-600">{totalAssigned}</p>
+            <p className="text-sm text-gray-600">Assigned Seats</p>
+            <p className="text-2xl font-bold text-green-600">{totalAssignedSeats}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-600">Unassigned</p>
-            <p className="text-2xl font-bold text-yellow-600">{unassignedGuests.length}</p>
+            <p className="text-sm text-gray-600">Unassigned Seats</p>
+            <p className="text-2xl font-bold text-yellow-600">
+              {unassignedGuests.reduce((sum, guest) => sum + getSeatCount(guest), 0)}
+            </p>
           </div>
         </div>
 
@@ -189,7 +198,7 @@ export default function SeatingPlanner() {
                   <div className="bg-indigo-50 px-4 py-3 border-b flex justify-between items-center">
                     <h3 className="font-semibold text-indigo-900">Table {tableNum}</h3>
                     <span className="text-sm text-gray-600">
-                      {groupedByTable[tableNum].length} guest{groupedByTable[tableNum].length !== 1 ? 's' : ''}
+                      {groupedByTable[tableNum].reduce((sum, guest) => sum + getSeatCount(guest), 0)} seat{groupedByTable[tableNum].reduce((sum, guest) => sum + getSeatCount(guest), 0) !== 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="p-4">
@@ -198,7 +207,7 @@ export default function SeatingPlanner() {
                         .sort((a, b) => (a.seatNumber || 0) - (b.seatNumber || 0))
                         .map((guest) => (
                           <div
-                            key={guest._id}
+                            key={guest.id}
                             className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                           >
                             <div className="flex-1">
@@ -250,7 +259,7 @@ export default function SeatingPlanner() {
                   <div className="space-y-2">
                     {unassignedGuests.map((guest) => (
                       <div
-                        key={guest._id}
+                        key={guest.id}
                         className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleEdit(guest)}
                       >

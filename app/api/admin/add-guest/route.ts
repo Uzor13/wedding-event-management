@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 import { generateUniqueId, generateCode } from '@/lib/utils/idUtils';
+
+// Validate UUID format
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +19,6 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-
-    await dbConnect();
 
     const {
       name,
@@ -38,7 +41,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingGuest = await Guest.findOne({ phoneNumber, couple: coupleId });
+    // Reject invalid UUIDs (e.g., couple names from old MongoDB sessions)
+    if (!isValidUUID(coupleId)) {
+      return NextResponse.json(
+        { message: 'Invalid coupleId format' },
+        { status: 400 }
+      );
+    }
+
+    const existingGuest = await prisma.guest.findFirst({
+      where: {
+        phoneNumber,
+        coupleId
+      }
+    });
+
     if (existingGuest) {
       return NextResponse.json(
         { message: 'Guest with this phone number already exists' },
@@ -51,25 +68,28 @@ export async function POST(request: NextRequest) {
     const qrcode = await QRCode.toDataURL(uniqueLink);
     let code = generateCode();
 
-    const existingCodeForUser = await Guest.findOne({ code });
+    const existingCodeForUser = await prisma.guest.findFirst({
+      where: { code }
+    });
+
     if (existingCodeForUser) {
       code = generateCode();
     }
 
-    const guest = new Guest({
-      name,
-      phoneNumber,
-      uniqueId,
-      qrCode: qrcode,
-      code,
-      couple: coupleId,
-      plusOneAllowed: plusOneAllowed || false,
-      plusOneName: plusOneName || undefined,
-      mealPreference: mealPreference || undefined,
-      dietaryRestrictions: dietaryRestrictions || undefined
+    const guest = await prisma.guest.create({
+      data: {
+        name,
+        phoneNumber,
+        uniqueId,
+        qrCode: qrcode,
+        code,
+        coupleId,
+        plusOneAllowed: plusOneAllowed || false,
+        plusOneName: plusOneName || undefined,
+        mealPreference: mealPreference || undefined,
+        dietaryRestrictions: dietaryRestrictions || undefined
+      }
     });
-
-    await guest.save();
 
     console.log('Saved guest plusOneAllowed:', guest.plusOneAllowed);
 

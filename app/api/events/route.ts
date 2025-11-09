@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Event from '@/lib/models/Event';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -10,8 +9,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    await dbConnect();
-
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
 
@@ -19,9 +16,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Couple ID required' }, { status: 400 });
     }
 
-    const events = await Event.find({ couple: coupleId })
-      .populate('guestList', 'name phoneNumber rsvpStatus')
-      .sort({ date: 1, time: 1 });
+    const events = await prisma.event.findMany({
+      where: { coupleId },
+      include: {
+        guests: {
+          select: {
+            id: true,
+            name: true,
+            phoneNumber: true,
+            rsvpStatus: true
+          }
+        }
+      },
+      orderBy: [
+        { date: 'asc' },
+        { time: 'asc' }
+      ]
+    });
 
     return NextResponse.json(events);
   } catch (error: any) {
@@ -35,8 +46,6 @@ export async function POST(request: NextRequest) {
     if (auth.role !== 'admin' && auth.role !== 'couple') {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
-
-    await dbConnect();
 
     const {
       eventName,
@@ -58,23 +67,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Couple ID required' }, { status: 400 });
     }
 
-    const event = new Event({
-      couple: coupleId,
-      eventName,
-      eventType,
-      date,
-      time,
-      venueName,
-      venueAddress,
-      description,
-      dressCode,
-      guestList: guestList || [],
-      isMainEvent: isMainEvent || false
+    const event = await prisma.event.create({
+      data: {
+        coupleId,
+        eventName,
+        eventType,
+        date,
+        time,
+        venueName,
+        venueAddress,
+        description,
+        dressCode,
+        isMainEvent: isMainEvent || false,
+        guests: guestList && guestList.length > 0 ? {
+          connect: guestList.map((guestId: string) => ({ id: guestId }))
+        } : undefined
+      }
     });
 
-    await event.save();
     return NextResponse.json(event, { status: 201 });
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: 'Unique constraint violation' }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

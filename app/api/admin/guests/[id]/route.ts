@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -15,8 +14,6 @@ export async function PUT(
         { status: 403 }
       );
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const { name, phoneNumber } = await request.json();
@@ -33,14 +30,17 @@ export async function PUT(
       ? auth.coupleId
       : searchParams.get('coupleId');
 
-    // Build filter
-    const filter: any = { _id: id };
+    // Build where clause
+    const where: any = { id };
     if (coupleId) {
-      filter.couple = coupleId;
+      where.coupleId = coupleId;
     }
 
-    // Check if phone number is being changed and if it already exists
-    const existingGuest = await Guest.findById(id);
+    // Check if guest exists
+    const existingGuest = await prisma.guest.findUnique({
+      where: { id }
+    });
+
     if (!existingGuest) {
       return NextResponse.json(
         { message: 'Guest not found' },
@@ -48,11 +48,22 @@ export async function PUT(
       );
     }
 
+    // Check authorization if coupleId is specified
+    if (coupleId && existingGuest.coupleId !== coupleId) {
+      return NextResponse.json(
+        { message: 'Guest not found or unauthorized' },
+        { status: 404 }
+      );
+    }
+
+    // Check if phone number is being changed and if it already exists
     if (phoneNumber !== existingGuest.phoneNumber) {
-      const duplicatePhone = await Guest.findOne({
-        phoneNumber,
-        couple: existingGuest.couple,
-        _id: { $ne: id }
+      const duplicatePhone = await prisma.guest.findFirst({
+        where: {
+          phoneNumber,
+          coupleId: existingGuest.coupleId,
+          id: { not: id }
+        }
       });
 
       if (duplicatePhone) {
@@ -64,21 +75,28 @@ export async function PUT(
     }
 
     // Update guest
-    const guest = await Guest.findOneAndUpdate(
-      filter,
-      { name, phoneNumber },
-      { new: true }
-    ).populate('tags', 'name color');
+    const guest = await prisma.guest.update({
+      where,
+      data: { name, phoneNumber },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
 
-    if (!guest) {
+    return NextResponse.json(guest);
+  } catch (error: any) {
+    if (error.code === 'P2025') {
       return NextResponse.json(
         { message: 'Guest not found or unauthorized' },
         { status: 404 }
       );
     }
-
-    return NextResponse.json(guest);
-  } catch (error: any) {
     return NextResponse.json(
       { message: error.message || 'Internal server error' },
       { status: 500 }
@@ -99,30 +117,44 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
-
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple'
       ? auth.coupleId
       : searchParams.get('coupleId');
 
-    const filter: any = { _id: id };
+    // Build where clause
+    const where: any = { id };
     if (coupleId) {
-      filter.couple = coupleId;
+      where.coupleId = coupleId;
     }
 
-    const guest = await Guest.findOneAndDelete(filter);
+    // Check if guest exists and is authorized
+    if (coupleId) {
+      const guest = await prisma.guest.findUnique({
+        where: { id }
+      });
 
-    if (!guest) {
+      if (!guest || guest.coupleId !== coupleId) {
+        return NextResponse.json(
+          { message: 'Guest not found or unauthorized' },
+          { status: 404 }
+        );
+      }
+    }
+
+    await prisma.guest.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ message: 'Guest deleted successfully' });
+  } catch (error: any) {
+    if (error.code === 'P2025') {
       return NextResponse.json(
         { message: 'Guest not found or unauthorized' },
         { status: 404 }
       );
     }
-
-    return NextResponse.json({ message: 'Guest deleted successfully' });
-  } catch (error: any) {
     return NextResponse.json(
       { message: error.message || 'Internal server error' },
       { status: 500 }

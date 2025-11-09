@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Tag from '@/lib/models/Tag';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -14,14 +12,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const { tagId, userIds = [], coupleId: bodyCoupleId } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
 
-    const tag = await Tag.findOne({
-      _id: tagId,
-      ...(coupleId ? { couple: coupleId } : {})
+    const tag = await prisma.tag.findFirst({
+      where: {
+        id: tagId,
+        ...(coupleId ? { coupleId } : {})
+      }
     });
 
     if (!tag) {
@@ -31,7 +29,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const guests = await Guest.find({ _id: { $in: userIds }, couple: tag.couple });
+    const guests = await prisma.guest.findMany({
+      where: {
+        id: { in: userIds },
+        coupleId: tag.coupleId
+      }
+    });
 
     if (guests.length !== userIds.length) {
       return NextResponse.json(
@@ -40,11 +43,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const updated = await Tag.findByIdAndUpdate(
-      tag._id,
-      { $addToSet: { users: { $each: userIds } } },
-      { new: true }
-    ).populate('users', 'name phoneNumber');
+    // Get existing user IDs to avoid duplicates
+    const existingTag = await prisma.tag.findUnique({
+      where: { id: tag.id },
+      include: { users: { select: { id: true } } }
+    });
+
+    const existingUserIds = existingTag?.users.map(u => u.id) || [];
+    const newUserIds = userIds.filter((id: string) => !existingUserIds.includes(id));
+
+    const updated = await prisma.tag.update({
+      where: { id: tag.id },
+      data: {
+        users: {
+          connect: newUserIds.map((id: string) => ({ id }))
+        }
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            phoneNumber: true
+          }
+        }
+      }
+    });
 
     return NextResponse.json(updated);
   } catch (error: any) {

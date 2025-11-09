@@ -39,13 +39,13 @@ interface SettingsData {
 
 export default function Settings() {
   const [settings, setSettings] = useState<SettingsData>({
-    eventTitle: 'Wedding Invitation',
-    coupleNames: 'Chris & Amaka',
-    eventDate: '2024-11-09',
-    eventTime: '14:00',
-    venueName: 'Space and Function Event Center',
-    venueAddress: 'City Park, Ahmadu Bello Way, Wuse 2, Abuja',
-    colorOfDay: 'White, Coffee and Beige',
+    eventTitle: '',
+    coupleNames: '',
+    eventDate: '',
+    eventTime: '',
+    venueName: '',
+    venueAddress: '',
+    colorOfDay: '',
     theme: {
       primaryColor: '#6F4E37',
       secondaryColor: '#8B7355',
@@ -61,6 +61,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [couples, setCouples] = useState<any[]>([]);
+  const [currentCouple, setCurrentCouple] = useState<any>(null);
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function Settings() {
         );
         setCouples(response.data);
         if (!selectedCoupleId && response.data.length > 0) {
-          setSelectedCoupleId(response.data[0]._id);
+          setSelectedCoupleId(response.data[0].id);
         }
       } catch (err) {
         console.error(err);
@@ -91,6 +92,7 @@ export default function Settings() {
     const fetchSettings = async () => {
       if (!token) {
         router.push('/login');
+        // Keep loading true during redirect
         return;
       }
 
@@ -100,6 +102,21 @@ export default function Settings() {
       }
 
       try {
+        // Fetch couple data to use as defaults
+        let coupleData = null;
+        if (currentCoupleId) {
+          try {
+            const coupleResponse = await axios.get(
+              `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            coupleData = coupleResponse.data.find((c: any) => c.id === currentCoupleId);
+            setCurrentCouple(coupleData);
+          } catch (e) {
+            console.error('Failed to fetch couple data');
+          }
+        }
+
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/settings`,
           {
@@ -109,7 +126,7 @@ export default function Settings() {
         );
 
         // Convert date format from "November 9, 2024" to "2024-11-09"
-        const eventDate = response.data.eventDate;
+        const eventDate = response.data.eventDate || (coupleData?.weddingDate || '');
         let formattedDate = eventDate;
         try {
           const date = new Date(eventDate);
@@ -120,19 +137,28 @@ export default function Settings() {
           // Keep original format if parsing fails
         }
 
+        // Use couple data as fallback for empty fields
         setSettings({
           ...response.data,
+          coupleNames: response.data.coupleNames || coupleData?.name || '',
           eventDate: formattedDate,
-          eventTime: response.data.eventTime || '14:00'
+          eventTime: response.data.eventTime || '',
+          eventTitle: response.data.eventTitle || '',
+          venueName: response.data.venueName || '',
+          venueAddress: response.data.venueAddress || '',
+          colorOfDay: response.data.colorOfDay || ''
         });
+
+        // Add small delay to ensure content is rendered before hiding loading
+        setTimeout(() => setLoading(false), 100);
       } catch (err: any) {
         if (err.response?.status === 401) {
           router.push('/login');
+          // Keep loading true during redirect
         } else {
           toast.error('Failed to load settings');
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -152,17 +178,20 @@ export default function Settings() {
         day: 'numeric'
       });
 
-      // Convert time format from "14:00" to "2:00 PM"
-      const [hours, minutes] = settings.eventTime.split(':');
-      const hour = parseInt(hours);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour % 12 || 12;
-      const formattedTime = `${displayHour}:${minutes} ${ampm}`;
+      // Convert time format from "14:00" to "2:00 PM" if time is provided
+      let formattedTime = settings.eventTime;
+      if (settings.eventTime && settings.eventTime.includes(':')) {
+        const [hours, minutes] = settings.eventTime.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        formattedTime = `${displayHour}:${minutes} ${ampm}`;
+      }
 
       const payload = {
         ...settings,
         eventDate: formattedDate,
-        eventTime: formattedTime,
+        eventTime: formattedTime || undefined, // Send undefined instead of empty string
         ...(isAdmin && currentCoupleId ? { coupleId: currentCoupleId } : {})
       };
 
@@ -267,8 +296,8 @@ export default function Settings() {
               className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select couple</option>
-              {couples.map((couple) => (
-                <option key={couple._id} value={couple._id}>
+              {couples.map((couple, index) => (
+                <option key={index} value={couple.id}>
                   {couple.name}
                 </option>
               ))}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -10,8 +9,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    await dbConnect();
-
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple' ? auth.coupleId : searchParams.get('coupleId');
 
@@ -19,9 +16,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Couple ID required' }, { status: 400 });
     }
 
-    const guests = await Guest.find({ couple: coupleId })
-      .select('name phoneNumber tableNumber seatNumber plusOneAllowed plusOneName rsvpStatus')
-      .sort({ tableNumber: 1, seatNumber: 1 });
+    const guests = await prisma.guest.findMany({
+      where: { coupleId },
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        tableName: true,
+        tableNumber: true,
+        seatingAssigned: true,
+        plusOneAllowed: true,
+        plusOneName: true,
+        rsvpStatus: true
+      },
+      orderBy: [
+        { tableNumber: 'asc' },
+        { name: 'asc' }
+      ]
+    });
 
     return NextResponse.json(guests);
   } catch (error: any) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Event from '@/lib/models/Event';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -13,7 +12,6 @@ export async function PUT(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    await dbConnect();
     const { id } = await params;
 
     const {
@@ -29,9 +27,9 @@ export async function PUT(
       isMainEvent
     } = await request.json();
 
-    const event = await Event.findByIdAndUpdate(
-      id,
-      {
+    const event = await prisma.event.update({
+      where: { id },
+      data: {
         eventName,
         eventType,
         date,
@@ -40,18 +38,31 @@ export async function PUT(
         venueAddress,
         description,
         dressCode,
-        guestList,
-        isMainEvent
+        isMainEvent,
+        guests: guestList ? {
+          set: guestList.map((guestId: string) => ({ id: guestId }))
+        } : undefined
       },
-      { new: true }
-    ).populate('guestList', 'name phoneNumber rsvpStatus');
-
-    if (!event) {
-      return NextResponse.json({ message: 'Event not found' }, { status: 404 });
-    }
+      include: {
+        guests: {
+          select: {
+            id: true,
+            name: true,
+            phoneNumber: true,
+            rsvpStatus: true
+          }
+        }
+      }
+    });
 
     return NextResponse.json(event);
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Event not found' }, { status: 404 });
+    }
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: 'Unique constraint violation' }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }
@@ -66,17 +77,17 @@ export async function DELETE(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    await dbConnect();
     const { id } = await params;
 
-    const event = await Event.findByIdAndDelete(id);
-
-    if (!event) {
-      return NextResponse.json({ message: 'Event not found' }, { status: 404 });
-    }
+    await prisma.event.delete({
+      where: { id }
+    });
 
     return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Event not found' }, { status: 404 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

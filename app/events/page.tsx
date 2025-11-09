@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Calendar, Plus, Trash2, Edit2, MapPin, Clock, Users as UsersIcon, Star } from 'lucide-react';
 
 interface Event {
-  _id: string;
+  id: string;
   eventName: string;
   eventType: 'rehearsal' | 'ceremony' | 'reception' | 'after-party' | 'other';
   date: string;
@@ -88,10 +88,10 @@ export default function EventsPage() {
     try {
       if (editingEvent) {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/events/${editingEvent._id}`,
+          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/events/${editingEvent.id}`,
           {
             ...formData,
-            guestList: editingEvent.guestList.map((g: any) => g._id || g)
+            guestList: editingEvent.guestList.map((g: any) => g.id || g)
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -208,7 +208,7 @@ export default function EventsPage() {
           ) : (
             events.map((event) => (
               <div
-                key={event._id}
+                key={event.id}
                 className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${
                   event.isMainEvent ? 'border-indigo-600' : 'border-gray-300'
                 }`}
@@ -272,7 +272,7 @@ export default function EventsPage() {
                       <Edit2 className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(event._id)}
+                      onClick={() => handleDelete(event.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                     >
                       <Trash2 className="w-5 h-5" />

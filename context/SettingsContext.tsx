@@ -27,11 +27,26 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Validate UUID format (prevent using couple names as IDs)
+  const isValidUUID = (id: string | null): boolean => {
+    if (!id) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+
   useEffect(() => {
     if (!isAdmin) {
       setSelectedCoupleId(coupleId || null);
     }
   }, [isAdmin, coupleId]);
+
+  // Clear invalid selectedCoupleId (e.g., couple names from old MongoDB sessions)
+  useEffect(() => {
+    if (isAdmin && selectedCoupleId && !isValidUUID(selectedCoupleId)) {
+      console.warn('Invalid coupleId detected, clearing:', selectedCoupleId);
+      setSelectedCoupleId(null);
+    }
+  }, [selectedCoupleId, isAdmin]);
 
   const fetchSettings = useCallback(async (overrides: { coupleId?: string | null } = {}) => {
     try {
@@ -41,6 +56,14 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       const targetCoupleId = overrides.coupleId !== undefined
         ? overrides.coupleId
         : (selectedCoupleId || coupleId || null);
+
+      // Validate coupleId before making API call
+      if (targetCoupleId && !isValidUUID(targetCoupleId)) {
+        console.warn('Invalid coupleId for settings fetch, skipping:', targetCoupleId);
+        setSettings(null);
+        setLoading(false);
+        return;
+      }
 
       const hasToken = Boolean(token);
       const url = hasToken

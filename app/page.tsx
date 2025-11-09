@@ -9,12 +9,12 @@ import { useSettings } from '@/context/SettingsContext';
 import { Tag as TagIcon, X } from 'lucide-react';
 
 interface Couple {
-  _id: string;
+  id: string;
   name: string;
 }
 
 interface Tag {
-  _id: string;
+  id: string;
   name: string;
   color: string;
 }
@@ -45,7 +45,7 @@ export default function GuestForm() {
         );
         setCouples(response.data);
         if (!selectedCoupleId && response.data.length > 0) {
-          setSelectedCoupleId(response.data[0]._id);
+          setSelectedCoupleId(response.data[0].id);
         }
       } catch (error) {
         console.error(error);
@@ -158,14 +158,14 @@ export default function GuestForm() {
 
       console.log('Add guest response:', response.data);
       console.log('Guest object:', response.data.guest);
-      console.log('Guest ID:', response.data.guest?._id);
+      console.log('Guest ID:', response.data.guest?.id);
 
       // If tags are selected, assign them to the newly created guest
-      if (selectedTags.length > 0 && response.data.guest?._id) {
-        console.log('Attempting to assign tags:', selectedTags, 'to guest:', response.data.guest._id);
+      if (selectedTags.length > 0 && response.data.guest?.id) {
+        console.log('Attempting to assign tags:', selectedTags, 'to guest:', response.data.guest.id);
         try {
           const tagResponse = await axios.put(
-            `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${response.data.guest._id}/assign-tags`,
+            `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/guests/${response.data.guest.id}/assign-tags`,
             { tagIds: selectedTags },
             {
               headers: { Authorization: `Bearer ${token}` },
@@ -178,7 +178,7 @@ export default function GuestForm() {
           // Don't throw - guest was created successfully even if tags failed
         }
       } else {
-        console.log('Skipping tag assignment - selectedTags:', selectedTags, 'guestId:', response.data.guest?._id);
+        console.log('Skipping tag assignment - selectedTags:', selectedTags, 'guestId:', response.data.guest?.id);
       }
 
       setMessage('Guest added successfully.');
@@ -224,8 +224,8 @@ export default function GuestForm() {
                 required
               >
                 <option value="" disabled>Select couple</option>
-                {couples.map((couple) => (
-                  <option key={couple._id} value={couple._id}>
+                {couples.map((couple, index) => (
+                  <option key={index} value={couple.id}>
                     {couple.name}
                   </option>
                 ))}
@@ -263,40 +263,6 @@ export default function GuestForm() {
             {phoneError && (
               <p className="text-red-500 text-xs mt-1">{phoneError}</p>
             )}
-          </div>
-
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="mealPreference">
-              Meal Preference (Optional)
-            </label>
-            <select
-              className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
-              id="mealPreference"
-              value={mealPreference}
-              onChange={(event) => setMealPreference(event.target.value)}
-            >
-              <option value="">Select preference</option>
-              <option value="vegetarian">Vegetarian</option>
-              <option value="non-vegetarian">Non-Vegetarian</option>
-              <option value="vegan">Vegan</option>
-              <option value="pescatarian">Pescatarian</option>
-              <option value="halal">Halal</option>
-              <option value="kosher">Kosher</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dietaryRestrictions">
-              Dietary Restrictions (Optional)
-            </label>
-            <input
-              className="shadow border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:shadow-outline"
-              id="dietaryRestrictions"
-              type="text"
-              value={dietaryRestrictions}
-              onChange={(event) => setDietaryRestrictions(event.target.value)}
-              placeholder="e.g., Gluten-free, Nut allergy"
-            />
           </div>
 
           <div className="border-t pt-4">
@@ -341,17 +307,17 @@ export default function GuestForm() {
                   const tagColor = tag?.color || '#6366f1';
                   return (
                     <button
-                      key={tag._id || `tag-add-${index}`}
+                      key={tag.id || `tag-add-${index}`}
                       type="button"
-                      onClick={() => toggleTag(tag._id)}
+                      onClick={() => toggleTag(tag.id)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        selectedTags.includes(tag._id)
+                        selectedTags.includes(tag.id)
                           ? 'ring-2 ring-indigo-500 bg-indigo-50'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
                       {tag.name}
-                      {selectedTags.includes(tag._id) && (
+                      {selectedTags.includes(tag.id) && (
                         <X className="inline w-3 h-3 ml-1" />
                       )}
                     </button>

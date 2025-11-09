@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parse } from 'csv-parse/sync';
 import QRCode from 'qrcode';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 import { generateUniqueId, generateCode } from '@/lib/utils/idUtils';
 
@@ -15,8 +14,6 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-
-    await dbConnect();
 
     const { csvData, coupleId: bodyCoupleId } = await request.json();
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
@@ -46,16 +43,17 @@ export async function POST(request: NextRequest) {
       const uniqueLink = `${process.env.NEXT_PUBLIC_SITE_LINK}/rsvp/${uniqueId}`;
       const qrcode = await QRCode.toDataURL(uniqueLink);
 
-      const guest = new Guest({
-        name: record.name,
-        phoneNumber: record.phoneNumber,
-        uniqueId,
-        code,
-        qrCode: qrcode,
-        couple: coupleId
+      const guest = await prisma.guest.create({
+        data: {
+          name: record.name,
+          phoneNumber: record.phoneNumber,
+          uniqueId,
+          code,
+          qrCode: qrcode,
+          coupleId
+        }
       });
 
-      await guest.save();
       importedGuests.push(guest);
     }
 

@@ -48,39 +48,48 @@ const NavBar = () => {
     return hrefs.some((href) => isActive(href));
   };
 
+  const { settings } = useSettings();
+
+  // Filter menu items based on feature flags
+  const guestItems = [
+    { href: '/', label: 'Add Guest' },
+    { href: '/guests', label: 'Guest List' },
+    { href: '/verify', label: 'Verify' },
+    { href: '/tags', label: 'Tags' },
+    ...(settings?.enableSeating === true ? [{ href: '/seating', label: 'Seating' }] : [])
+  ];
+
+  const planningItems = [
+    ...(settings?.enableEvents === true ? [{ href: '/events', label: 'Events' }] : []),
+    ...(settings?.enableTimeline === true ? [{ href: '/timeline', label: 'Timeline' }] : []),
+    ...(settings?.enableBudget === true ? [{ href: '/budget', label: 'Budget' }] : []),
+    ...(settings?.enableRegistry === true ? [{ href: '/registry', label: 'Registry' }] : [])
+  ];
+
+  const mediaItems = [
+    ...(settings?.enablePhotos === true ? [{ href: '/photos', label: 'Photos' }] : []),
+    ...(settings?.enableMessages === true ? [{ href: '/messages', label: 'Messages' }] : [])
+  ];
+
   const dropdownMenus = [
     {
       id: 'guests',
       label: 'Guests',
       icon: Users,
-      items: [
-        { href: '/', label: 'Add Guest' },
-        { href: '/guests', label: 'Guest List' },
-        { href: '/verify', label: 'Verify' },
-        { href: '/tags', label: 'Tags' },
-        { href: '/seating', label: 'Seating' }
-      ]
+      items: guestItems
     },
-    {
+    ...(planningItems.length > 0 ? [{
       id: 'planning',
       label: 'Planning',
       icon: Calendar,
-      items: [
-        { href: '/events', label: 'Events' },
-        { href: '/timeline', label: 'Timeline' },
-        { href: '/budget', label: 'Budget' },
-        { href: '/registry', label: 'Registry' }
-      ]
-    },
-    {
+      items: planningItems
+    }] : []),
+    ...(mediaItems.length > 0 ? [{
       id: 'media',
       label: 'Media',
       icon: Image,
-      items: [
-        { href: '/photos', label: 'Photos' },
-        { href: '/messages', label: 'Messages' }
-      ]
-    }
+      items: mediaItems
+    }] : [])
   ];
 
   return (

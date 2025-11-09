@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Clock, Plus, Trash2, Edit2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface TimelineItem {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   time: string;
@@ -80,7 +80,7 @@ export default function TimelineBuilder() {
     try {
       if (editingItem) {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/timeline/${editingItem._id}`,
+          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/timeline/${editingItem.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -161,7 +161,7 @@ export default function TimelineBuilder() {
       await Promise.all(
         newItems.map((item) =>
           axios.put(
-            `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/timeline/${item._id}`,
+            `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/timeline/${item.id}`,
             { ...item },
             { headers: { Authorization: `Bearer ${token}` } }
           )
@@ -222,10 +222,10 @@ export default function TimelineBuilder() {
                 {groupedItems[cat.value]?.length > 0 ? (
                   groupedItems[cat.value].map((item, index) => {
                     const categoryItems = groupedItems[cat.value];
-                    const actualIndex = items.findIndex((i) => i._id === item._id);
+                    const actualIndex = items.findIndex((i) => i.id === item.id);
                     return (
                       <div
-                        key={item._id}
+                        key={item.id}
                         className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50"
                       >
                         <div className="flex flex-col gap-1">
@@ -264,7 +264,7 @@ export default function TimelineBuilder() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(item._id)}
+                            onClick={() => handleDelete(item.id)}
                             className="text-red-600 hover:text-red-800"
                           >
                             <Trash2 className="w-4 h-4" />

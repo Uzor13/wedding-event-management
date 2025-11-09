@@ -1,0 +1,258 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Couple {
+  id          String   @id @default(uuid())
+  name        String
+  weddingDate DateTime?
+  email       String?
+  username    String   @unique
+  password    String
+  eventTitle  String   @default("Wedding Invitation")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  guests        Guest[]
+  tags          Tag[]
+  settings      Setting?
+  budgetItems   BudgetItem[]
+  events        Event[]
+  giftRegistry  GiftRegistry[]
+  messages      Message[]
+  photos        Photo[]
+  timelineItems TimelineItem[]
+
+  @@map("couples")
+}
+
+model Guest {
+  id                          String    @id @default(uuid())
+  name                        String
+  phoneNumber                 String
+  rsvpStatus                  Boolean   @default(false)
+  uniqueId                    String    @unique
+  code                        String    @unique
+  qrCode                      String?
+  isUsed                      Boolean   @default(false)
+  plusOneAllowed              Boolean   @default(false)
+  plusOneName                 String?
+  plusOnePhone                String?
+  plusOneRsvp                 Boolean   @default(false)
+  mealPreference              String?
+  plusOneMealPreference       String?
+  dietaryRestrictions         String?
+  plusOneDietaryRestrictions  String?
+  tableName                   String?
+  tableNumber                 Int?
+  seatingAssigned             Boolean   @default(false)
+  coupleId                    String
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  tags   Tag[]  @relation("GuestTags")
+  events Event[] @relation("EventGuests")
+
+  @@index([coupleId])
+  @@index([uniqueId])
+  @@index([code])
+  @@index([rsvpStatus, coupleId])
+  @@index([isUsed, coupleId])
+  @@index([name, coupleId])
+  @@map("guests")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#3b82f6")
+  coupleId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  couple Couple  @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  guests Guest[] @relation("GuestTags")
+
+  @@unique([name, coupleId])
+  @@index([coupleId])
+  @@map("tags")
+}
+
+model Setting {
+  id                 String   @id @default(uuid())
+  coupleId           String   @unique
+  eventTitle         String   @default("You're Invited to Our Wedding")
+  coupleNames        String   @default("The Happy Couple")
+  eventDate          String?
+  eventTime          String?
+  venueName          String?
+  venueAddress       String?
+  colorOfDay         String   @default("White, Coffee and Beige")
+  primaryColor       String   @default("#6F4E37")
+  secondaryColor     String   @default("#8B7355")
+  accentColor        String   @default("#F5E9D3")
+  backgroundColor    String   @default("#FFFFFF")
+  textColor          String   @default("#000000")
+  qrBackgroundColor  String   @default("#FFFFFF")
+
+  // Feature flags (only editable by admin)
+  enableTimeline     Boolean  @default(false)
+  enableMessages     Boolean  @default(false)
+  enableEvents       Boolean  @default(false)
+  enableRegistry     Boolean  @default(false)
+  enablePhotos       Boolean  @default(false)
+  enableBudget       Boolean  @default(true)
+  enableSeating      Boolean  @default(true)
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId])
+  @@map("settings")
+}
+
+model BudgetItem {
+  id          String    @id @default(uuid())
+  coupleId    String
+  category    String
+  itemName    String
+  estimatedCost Float?
+  actualCost    Float?
+  paid        Boolean   @default(false)
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId])
+  @@index([category, coupleId])
+  @@index([paid, coupleId])
+  @@map("budget_items")
+}
+
+model Event {
+  id           String   @id @default(uuid())
+  coupleId     String
+  eventName    String
+  eventType    String   @default("other")
+  date         DateTime
+  time         String
+  venueName    String
+  venueAddress String
+  description  String?
+  dressCode    String?
+  isMainEvent  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  couple Couple  @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  guests Guest[] @relation("EventGuests")
+
+  @@index([coupleId])
+  @@index([date, coupleId])
+  @@index([eventType, coupleId])
+  @@map("events")
+}
+
+model GiftRegistry {
+  id               String   @id @default(uuid())
+  coupleId         String
+  itemName         String
+  category         String
+  description      String?
+  price            Float?
+  quantity         Int      @default(1)
+  quantityReceived Int      @default(0)
+  purchaseLink     String?
+  imageUrl         String?
+  priority         String   @default("medium")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId])
+  @@index([category, coupleId])
+  @@map("gift_registry")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  coupleId  String
+  guestName String
+  message   String
+  approved  Boolean  @default(false)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId, approved])
+  @@index([coupleId, createdAt])
+  @@map("messages")
+}
+
+model Photo {
+  id           String   @id @default(uuid())
+  coupleId     String
+  title        String?
+  description  String?
+  imageUrl     String
+  thumbnailUrl String?
+  category     String   @default("other")
+  uploadedBy   String   @default("admin")
+  uploaderName String?
+  featured     Boolean  @default(false)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId, category])
+  @@index([coupleId, createdAt])
+  @@index([coupleId, order])
+  @@map("photos")
+}
+
+model TimelineItem {
+  id          String   @id @default(uuid())
+  coupleId    String
+  title       String
+  description String?
+  time        String
+  duration    Int?
+  order       Int
+  category    String   @default("other")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  couple Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId, order])
+  @@map("timeline_items")
+}

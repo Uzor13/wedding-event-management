@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import dbConnect from '@/lib/db/mongodb';
-import Couple from '@/lib/models/Couple';
-import Guest from '@/lib/models/Guest';
-import Setting from '@/lib/models/Setting';
-import Tag from '@/lib/models/Tag';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -20,10 +16,9 @@ export async function PUT(
       );
     }
 
-    await dbConnect();
-
     const { id } = await params;
-    const { name, email, password } = await request.json();
+    const { name, email, password, weddingDate } = await request.json();
+
     if (!name) {
       return NextResponse.json(
         { message: 'Name is required' },
@@ -31,28 +26,43 @@ export async function PUT(
       );
     }
 
-    const update: any = { name, email };
+    const updateData: any = {
+      name,
+      email
+    };
+
+    if (weddingDate) {
+      updateData.weddingDate = new Date(weddingDate);
+    }
 
     // Only hash and update password if provided
     if (password) {
-      update.password = await bcrypt.hash(password, 10);
+      updateData.password = await bcrypt.hash(password, 10);
     }
 
-    const couple = await Couple.findByIdAndUpdate(
-      id,
-      update,
-      { new: true }
-    ).select('-password');
+    const couple = await prisma.couple.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        weddingDate: true,
+        email: true,
+        username: true,
+        eventTitle: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
 
-    if (!couple) {
+    return NextResponse.json(couple);
+  } catch (error: any) {
+    if (error.code === 'P2025') {
       return NextResponse.json(
         { message: 'Couple not found' },
         { status: 404 }
       );
     }
-
-    return NextResponse.json(couple);
-  } catch (error: any) {
     return NextResponse.json(
       { message: error.message || 'Internal server error' },
       { status: 500 }
@@ -73,27 +83,22 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
-
     const { id } = await params;
-    const couple = await Couple.findById(id);
-    if (!couple) {
+
+    // With Prisma cascade deletes, we just delete the couple
+    // All related data (guests, tags, settings, etc.) will be deleted automatically
+    await prisma.couple.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ message: 'Couple and all related data deleted successfully' });
+  } catch (error: any) {
+    if (error.code === 'P2025') {
       return NextResponse.json(
         { message: 'Couple not found' },
         { status: 404 }
       );
     }
-
-    // Delete all related data
-    await Promise.all([
-      Guest.deleteMany({ couple: id }),
-      Tag.deleteMany({ couple: id }),
-      Setting.deleteOne({ couple: id }),
-      Couple.findByIdAndDelete(id)
-    ]);
-
-    return NextResponse.json({ message: 'Couple and all related data deleted successfully' });
-  } catch (error: any) {
     return NextResponse.json(
       { message: error.message || 'Internal server error' },
       { status: 500 }

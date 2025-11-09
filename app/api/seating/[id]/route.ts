@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -13,12 +12,15 @@ export async function PUT(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    await dbConnect();
     const { id } = await params;
-
-    const { tableNumber, seatNumber } = await request.json();
+    const { tableName, tableNumber, seatingAssigned } = await request.json();
 
     const updateData: any = {};
+
+    if (tableName !== undefined) {
+      updateData.tableName = tableName || null;
+    }
+
     if (tableNumber !== undefined) {
       if (tableNumber === '' || tableNumber === null) {
         updateData.tableNumber = null;
@@ -27,27 +29,21 @@ export async function PUT(
         updateData.tableNumber = isNaN(parsed) ? null : parsed;
       }
     }
-    if (seatNumber !== undefined) {
-      if (seatNumber === '' || seatNumber === null) {
-        updateData.seatNumber = null;
-      } else {
-        const parsed = parseInt(seatNumber);
-        updateData.seatNumber = isNaN(parsed) ? null : parsed;
-      }
+
+    if (seatingAssigned !== undefined) {
+      updateData.seatingAssigned = Boolean(seatingAssigned);
     }
 
-    const guest = await Guest.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
-
-    if (!guest) {
-      return NextResponse.json({ message: 'Guest not found' }, { status: 404 });
-    }
+    const guest = await prisma.guest.update({
+      where: { id },
+      data: updateData
+    });
 
     return NextResponse.json(guest);
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Guest not found' }, { status: 404 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

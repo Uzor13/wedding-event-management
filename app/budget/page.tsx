@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { DollarSign, Plus, Trash2, Edit, Check, X } from 'lucide-react';
 
 interface BudgetItem {
-  _id: string;
+  id: string;
   category: string;
   itemName: string;
   vendor?: string;
@@ -120,7 +120,7 @@ export default function BudgetTracker() {
   const togglePaid = async (item: BudgetItem) => {
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget/${item._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget/${item.id}`,
         { ...item, paid: !item.paid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -187,7 +187,7 @@ export default function BudgetTracker() {
             </thead>
             <tbody className="divide-y">
               {items.map((item) => (
-                <tr key={item._id}>
+                <tr key={item.id}>
                   <td className="px-4 py-3 text-sm">{item.category}</td>
                   <td className="px-4 py-3 text-sm font-medium">{item.itemName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{item.vendor || '-'}</td>
@@ -203,7 +203,7 @@ export default function BudgetTracker() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => handleDelete(item._id)}
+                      onClick={() => handleDelete(item.id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 className="w-4 h-4" />

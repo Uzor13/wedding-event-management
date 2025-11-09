@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Gift, Plus, Trash2, Edit2, ExternalLink, Check } from 'lucide-react';
 
 interface GiftItem {
-  _id: string;
+  id: string;
   itemName: string;
   category: string;
   description?: string;
@@ -93,7 +93,7 @@ export default function GiftRegistry() {
 
       if (editingItem) {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/registry/${editingItem._id}`,
+          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/registry/${editingItem.id}`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -154,7 +154,7 @@ export default function GiftRegistry() {
 
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/registry/${item._id}`,
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/registry/${item.id}`,
         {
           ...item,
           quantityReceived: item.quantityReceived + 1
@@ -252,7 +252,7 @@ export default function GiftRegistry() {
 
                       return (
                         <div
-                          key={item._id}
+                          key={item.id}
                           className={`border rounded-lg p-4 ${
                             isComplete ? 'bg-green-50 border-green-300' : 'hover:bg-gray-50'
                           }`}
@@ -317,7 +317,7 @@ export default function GiftRegistry() {
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(item._id)}
+                              onClick={() => handleDelete(item.id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                             >
                               <Trash2 className="w-4 h-4" />

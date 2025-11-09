@@ -46,7 +46,7 @@ export default function Dashboard() {
         );
         setCouples(response.data);
         if (!selectedCoupleId && response.data.length > 0) {
-          setSelectedCoupleId(response.data[0]._id);
+          setSelectedCoupleId(response.data[0].id);
         }
       } catch (err) {
         console.error(err);
@@ -159,7 +159,7 @@ export default function Dashboard() {
             >
               <option value="">Select couple</option>
               {couples.map((couple) => (
-                <option key={couple._id} value={couple._id}>
+                <option key={couple.id} value={couple.id}>
                   {couple.name}
                 </option>
               ))}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Guest from '@/lib/models/Guest';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -10,27 +9,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    await dbConnect();
-
-    // Update all guests where plusOneAllowed is undefined or doesn't exist
-    const result = await Guest.updateMany(
-      {
-        $or: [
-          { plusOneAllowed: { $exists: false } },
+    // Update all guests where plusOneAllowed is null
+    const result = await prisma.guest.updateMany({
+      where: {
+        OR: [
           { plusOneAllowed: null }
         ]
       },
-      { $set: { plusOneAllowed: false } }
-    );
+      data: {
+        plusOneAllowed: false
+      }
+    });
 
     // Get counts
-    const totalGuests = await Guest.countDocuments();
-    const withPlusOne = await Guest.countDocuments({ plusOneAllowed: true });
-    const withoutPlusOne = await Guest.countDocuments({ plusOneAllowed: false });
+    const totalGuests = await prisma.guest.count();
+    const withPlusOne = await prisma.guest.count({ where: { plusOneAllowed: true } });
+    const withoutPlusOne = await prisma.guest.count({ where: { plusOneAllowed: false } });
 
     return NextResponse.json({
       message: 'Fixed plusOneAllowed field',
-      updated: result.modifiedCount,
+      updated: result.count,
       stats: {
         total: totalGuests,
         withPlusOne,
