@@ -36,12 +36,10 @@ photoSchema.index({ couple: 1, category: 1 });
 photoSchema.index({ couple: 1, createdAt: -1 });
 photoSchema.index({ couple: 1, order: 1 });
 
-let Photo: Model<IPhoto>;
-
-try {
-  Photo = mongoose.model<IPhoto>('Photo');
-} catch {
-  Photo = mongoose.model<IPhoto>('Photo', photoSchema);
+declare global {
+  var Photo: Model<IPhoto> | undefined;
 }
+
+const Photo = global.Photo || mongoose.models.Photo || (global.Photo = mongoose.model<IPhoto>('Photo', photoSchema));
 
 export default Photo;

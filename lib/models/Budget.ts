@@ -30,12 +30,10 @@ budgetItemSchema.index({ couple: 1 });
 budgetItemSchema.index({ category: 1, couple: 1 });
 budgetItemSchema.index({ paid: 1, couple: 1 });
 
-let BudgetItem: Model<IBudgetItem>;
-
-try {
-  BudgetItem = mongoose.model<IBudgetItem>('BudgetItem');
-} catch {
-  BudgetItem = mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema);
+declare global {
+  var BudgetItem: Model<IBudgetItem> | undefined;
 }
+
+const BudgetItem = global.BudgetItem || mongoose.models.BudgetItem || (global.BudgetItem = mongoose.model<IBudgetItem>('BudgetItem', budgetItemSchema));
 
 export default BudgetItem;

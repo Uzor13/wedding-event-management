@@ -63,145 +63,174 @@ export async function generateInvitationPDF(
   // Page dimensions
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const centerX = pageWidth / 2;
+  const margin = 20;
 
-  // Background accent
-  doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
-
-  // Decorative borders
-  doc.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.setLineWidth(0.5);
-  doc.rect(10, 45, pageWidth - 20, pageHeight - 90, 'S');
+  let yPos = 30;
 
   // Title - "You're Invited"
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('times', 'bold');
   doc.setFontSize(28);
   doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.text("You're Invited", pageWidth / 2, 30, { align: 'center' });
+  doc.text("You're Invited", centerX, yPos, { align: 'center' });
+  yPos += 12;
 
-  // Decorative line
+  // Simple divider line
   doc.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
-  doc.setLineWidth(0.3);
-  doc.line(40, 35, pageWidth - 40, 35);
-
-  let yPos = 60;
+  doc.setLineWidth(0.5);
+  doc.line(centerX - 30, yPos, centerX + 30, yPos);
+  yPos += 15;
 
   // Guest name
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(60, 60, 60);
-  doc.text(`Dear ${guestInfo.name},`, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 15;
+  doc.text(`Dear ${guestInfo.name},`, centerX, yPos, { align: 'center' });
+  yPos += 10;
 
   // Invitation text
-  doc.setFontSize(12);
-  const invitationText = 'You are warmly invited to celebrate with us!';
-  doc.text(invitationText, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 20;
-
-  // Event title
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.text(eventDetails.eventTitle, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 12;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.text('You are cordially invited to celebrate the wedding of', centerX, yPos, { align: 'center' });
+  yPos += 15;
 
   // Couple names
-  doc.setFont('helvetica', 'bolditalic');
-  doc.setFontSize(18);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text(eventDetails.coupleNames, centerX, yPos, { align: 'center' });
+  yPos += 15;
+
+  // Event title
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(12);
   doc.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
-  doc.text(eventDetails.coupleNames, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 20;
+  doc.text(eventDetails.eventTitle, centerX, yPos, { align: 'center' });
+  yPos += 18;
 
-  // Calculate box height dynamically based on content
-  const addressLines = doc.splitTextToSize(eventDetails.venueAddress, pageWidth - 85);
-  const boxHeight = 58 + (addressLines.length - 1) * 6;
-
-  // Event details box
-  doc.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
-  doc.roundedRect(20, yPos - 5, pageWidth - 40, boxHeight, 3, 3, 'FD');
-
-  doc.setFont('helvetica', 'normal');
+  // Event details section
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(60, 60, 60);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Event Details', centerX, yPos, { align: 'center' });
+  yPos += 10;
 
-  yPos += 8;
-
-  // Define consistent label width for alignment
-  const labelX = 30;
-  const valueX = 68;
+  // Details with consistent spacing
+  const detailsLeftMargin = 40;
+  const detailsRightMargin = pageWidth - 40;
+  const detailsWidth = detailsRightMargin - detailsLeftMargin;
 
   // Date
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Date:', labelX, yPos);
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Date:', detailsLeftMargin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.eventDate, valueX, yPos);
-  yPos += 10;
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text(eventDetails.eventDate, detailsLeftMargin + 15, yPos);
+  yPos += 8;
 
   // Time
   doc.setFont('helvetica', 'bold');
-  doc.text('Time:', labelX, yPos);
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Time:', detailsLeftMargin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.eventTime, valueX, yPos);
-  yPos += 10;
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text(eventDetails.eventTime, detailsLeftMargin + 15, yPos);
+  yPos += 8;
 
   // Venue
   doc.setFont('helvetica', 'bold');
-  doc.text('Venue:', labelX, yPos);
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Venue:', detailsLeftMargin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.venueName, valueX, yPos);
-  yPos += 10;
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text(eventDetails.venueName, detailsLeftMargin + 15, yPos);
+  yPos += 8;
 
-  // Address (split if too long)
+  // Address
   doc.setFont('helvetica', 'bold');
-  doc.text('Address:', labelX, yPos);
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Address:', detailsLeftMargin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(addressLines, valueX, yPos);
-  yPos += addressLines.length * 6 + 4;
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  const addressLines = doc.splitTextToSize(eventDetails.venueAddress, detailsWidth - 20);
+  doc.text(addressLines, detailsLeftMargin + 20, yPos);
+  yPos += (addressLines.length * 5) + 3;
 
-  // Color of the day
+  // Attire
   doc.setFont('helvetica', 'bold');
-  doc.text('Dress Code:', labelX, yPos);
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Attire:', detailsLeftMargin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(eventDetails.colorOfDay, valueX, yPos);
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text(eventDetails.colorOfDay, detailsLeftMargin + 15, yPos);
+  yPos += 18;
+
+  // Divider before RSVP section
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(centerX - 40, yPos, centerX + 40, yPos);
   yPos += 15;
 
-  // QR Code section
+  // RSVP section header
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(11);
   doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.text('Scan to RSVP', pageWidth / 2, yPos, { align: 'center' });
-  yPos += 5;
+  doc.text('Please Confirm Your Attendance', centerX, yPos, { align: 'center' });
+  yPos += 10;
+
+  // QR code
+  const qrSize = 40;
+  const qrX = (pageWidth - qrSize) / 2;
 
   // Add QR code
-  const qrSize = 50;
-  doc.addImage(qrCodeDataUrl, 'PNG', (pageWidth - qrSize) / 2, yPos, qrSize, qrSize);
+  doc.addImage(qrCodeDataUrl, 'PNG', qrX, yPos, qrSize, qrSize);
   yPos += qrSize + 8;
 
-  // Verification code
+  // Instruction text
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Verification Code: ${guestInfo.code}`, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 5;
-
-  // RSVP link
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
-  const rsvpText = doc.splitTextToSize(rsvpLink, pageWidth - 40);
-  doc.text(rsvpText, pageWidth / 2, yPos, { align: 'center' });
+  doc.text('Scan the QR code to confirm your attendance', centerX, yPos, { align: 'center' });
+  yPos += 10;
+
+  // Verification code
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  doc.text('Verification Code:', centerX, yPos, { align: 'center' });
+  yPos += 6;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(60, 60, 60);
+  doc.text(guestInfo.code, centerX, yPos, { align: 'center' });
+  yPos += 10;
+
+  // RSVP link
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  const rsvpText = doc.splitTextToSize(rsvpLink, pageWidth - 50);
+  doc.text(rsvpText, centerX, yPos, { align: 'center' });
 
   // Footer
+  const footerY = pageHeight - 20;
+  doc.setFont('helvetica', 'italic');
   doc.setFontSize(10);
   doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  doc.text('We look forward to celebrating with you!', pageWidth / 2, pageHeight - 25, { align: 'center' });
-
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  doc.text('Generated by Wedding RSVP Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
+  doc.text('We look forward to celebrating with you!', centerX, footerY, { align: 'center' });
 
   // Return as blob
   return doc.output('blob');

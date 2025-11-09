@@ -102,12 +102,10 @@ const settingsSchema = new Schema<ISetting>({
 
 settingsSchema.index({ couple: 1 }, { unique: true, sparse: true });
 
-let Setting: Model<ISetting>;
-
-try {
-  Setting = mongoose.model<ISetting>('Setting');
-} catch {
-  Setting = mongoose.model<ISetting>('Setting', settingsSchema);
+declare global {
+  var Setting: Model<ISetting> | undefined;
 }
+
+const Setting = global.Setting || mongoose.models.Setting || (global.Setting = mongoose.model<ISetting>('Setting', settingsSchema));
 
 export default Setting;

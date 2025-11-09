@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { use } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Heart, Calendar, MapPin, Clock, Check, X, User, Users } from 'lucide-react';
+import { Heart, Calendar, MapPin, Clock, Check, X, Users } from 'lucide-react';
 
 interface Guest {
   _id: string;
@@ -16,8 +16,6 @@ interface Guest {
   plusOneName?: string;
   plusOnePhone?: string;
   plusOneRsvp?: boolean;
-  mealPreference?: string;
-  plusOneMealPreference?: string;
   dietaryRestrictions?: string;
   plusOneDietaryRestrictions?: string;
   couple: {
@@ -40,16 +38,6 @@ interface Event {
   isMainEvent: boolean;
 }
 
-const MEAL_OPTIONS = [
-  { value: '', label: 'Select preference' },
-  { value: 'vegetarian', label: 'Vegetarian' },
-  { value: 'non-vegetarian', label: 'Non-Vegetarian' },
-  { value: 'vegan', label: 'Vegan' },
-  { value: 'pescatarian', label: 'Pescatarian' },
-  { value: 'halal', label: 'Halal' },
-  { value: 'kosher', label: 'Kosher' }
-];
-
 export default function RSVPPage({ params }: { params: Promise<{ uniqueId: string }> }) {
   const resolvedParams = use(params);
   const [guest, setGuest] = useState<Guest | null>(null);
@@ -67,8 +55,6 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
     plusOneName: '',
     plusOnePhone: '',
     plusOneRsvp: false,
-    mealPreference: '',
-    plusOneMealPreference: '',
     dietaryRestrictions: '',
     plusOneDietaryRestrictions: ''
   });
@@ -95,8 +81,6 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
         plusOneName: guestData.plusOneName || '',
         plusOnePhone: guestData.plusOnePhone || '',
         plusOneRsvp: guestData.plusOneRsvp || false,
-        mealPreference: guestData.mealPreference || '',
-        plusOneMealPreference: guestData.plusOneMealPreference || '',
         dietaryRestrictions: guestData.dietaryRestrictions || '',
         plusOneDietaryRestrictions: guestData.plusOneDietaryRestrictions || ''
       });
@@ -299,25 +283,6 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
 
             {formData.rsvpStatus && (
               <>
-                {/* Meal Preference */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    <User className="w-4 h-4 inline mr-1" />
-                    Your Meal Preference
-                  </label>
-                  <select
-                    value={formData.mealPreference}
-                    onChange={(e) => setFormData({ ...formData, mealPreference: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  >
-                    {MEAL_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Dietary Restrictions */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -387,25 +352,6 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
 
                       {formData.plusOneRsvp && (
                         <>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">
-                              Plus One's Meal Preference
-                            </label>
-                            <select
-                              value={formData.plusOneMealPreference}
-                              onChange={(e) =>
-                                setFormData({ ...formData, plusOneMealPreference: e.target.value })
-                              }
-                              className="w-full px-3 py-2 border rounded-lg"
-                            >
-                              {MEAL_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
                           <div>
                             <label className="block text-sm font-medium mb-1">
                               Plus One's Dietary Restrictions
