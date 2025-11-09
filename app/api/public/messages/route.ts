@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       data: {
         coupleId,
         guestName,
-        email: email || null,
+        // Note: email field removed - not in Prisma schema
         message,
         approved: false,
         featured: false

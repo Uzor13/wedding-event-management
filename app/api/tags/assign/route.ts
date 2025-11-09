@@ -43,24 +43,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get existing user IDs to avoid duplicates
+    // Get existing guest IDs to avoid duplicates
     const existingTag = await prisma.tag.findUnique({
       where: { id: tag.id },
-      include: { users: { select: { id: true } } }
+      include: { guests: { select: { id: true } } }
     });
 
-    const existingUserIds = existingTag?.users.map(u => u.id) || [];
-    const newUserIds = userIds.filter((id: string) => !existingUserIds.includes(id));
+    const existingGuestIds = existingTag?.guests.map(g => g.id) || [];
+    const newGuestIds = userIds.filter((id: string) => !existingGuestIds.includes(id));
 
     const updated = await prisma.tag.update({
       where: { id: tag.id },
       data: {
-        users: {
-          connect: newUserIds.map((id: string) => ({ id }))
+        guests: {
+          connect: newGuestIds.map((id: string) => ({ id }))
         }
       },
       include: {
-        users: {
+        guests: {
           select: {
             id: true,
             name: true,

@@ -20,7 +20,7 @@ export async function PUT(
       data: {
         category,
         itemName,
-        vendor: vendor || undefined,
+        // Note: vendor field removed - not in Prisma schema
         estimatedCost: estimatedCost || undefined,
         actualCost: actualCost || undefined,
         paid,

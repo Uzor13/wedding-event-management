@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         coupleId,
         category,
         itemName,
-        vendor: vendor || undefined,
+        // Note: vendor field removed - not in Prisma schema
         estimatedCost: estimatedCost || undefined,
         actualCost: actualCost || undefined,
         paid: paid || false,
