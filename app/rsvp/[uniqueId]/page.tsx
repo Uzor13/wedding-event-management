@@ -127,10 +127,9 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
       });
 
       // Check if guest has already responded
-      // They've responded if: rsvpStatus is true, OR they have plus one data filled
-      const alreadyResponded = guestData.rsvpStatus ||
-                               !!(guestData.plusOneName || guestData.plusOnePhone);
-      setHasResponded(alreadyResponded);
+      // Only show confirmation if they explicitly accepted (rsvpStatus = true)
+      // If rsvpStatus is false, show the form (could be new guest or declined guest who wants to update)
+      setHasResponded(guestData.rsvpStatus === true);
 
       // Add small delay to ensure content is rendered before hiding loading
       setTimeout(() => setLoading(false), 100);
