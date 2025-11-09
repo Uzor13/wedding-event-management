@@ -1,5 +1,5 @@
 interface Guest {
-  _id: string
+  id: string  // Changed from _id to id for Prisma
   name: string
   phoneNumber: string
   rsvpStatus: boolean
