@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import '@/lib/models/Guest';
+import '@/lib/models/Couple';
 
 export interface IEvent extends Document {
   couple: mongoose.Types.ObjectId;

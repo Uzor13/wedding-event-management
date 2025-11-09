@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import '@/lib/models/Couple';
 
 interface ITheme {
   primaryColor: string;
