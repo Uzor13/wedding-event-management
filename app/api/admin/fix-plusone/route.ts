@@ -9,12 +9,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    // Update all guests where plusOneAllowed is null
+    // Update all guests - since plusOneAllowed is now a required boolean field in Prisma,
+    // we don't need to check for null. This route can be used to reset all values if needed.
     const result = await prisma.guest.updateMany({
       where: {
-        OR: [
-          { plusOneAllowed: null }
-        ]
+        plusOneAllowed: { not: true } // Update all that are not explicitly true
       },
       data: {
         plusOneAllowed: false
