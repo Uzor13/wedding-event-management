@@ -193,76 +193,108 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
     }
 
     setDownloading(true);
-    toast.info('Generating PDF...');
+    toast.info('Preparing invitation...');
 
     try {
-      // Get the invitation card element
+      // Option 1: Use browser's print dialog (more reliable)
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Please allow pop-ups to download the invitation');
+      }
+
       const element = document.getElementById('invitation-card');
       if (!element) {
         throw new Error('Invitation card not found');
       }
 
-      // Import html2canvas and jsPDF dynamically
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
+      // Clone the element to avoid modifying the original
+      const clonedElement = element.cloneNode(true) as HTMLElement;
 
-      console.log('Starting PDF generation...');
+      // Create a complete HTML document for printing
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>${guest.name} - Wedding Invitation</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: white;
+                padding: 20px;
+              }
+              @media print {
+                body {
+                  padding: 0;
+                }
+                @page {
+                  margin: 0.5in;
+                  size: auto;
+                }
+              }
+              ${getInlineStyles()}
+            </style>
+          </head>
+          <body>
+            ${clonedElement.outerHTML}
+          </body>
+        </html>
+      `;
 
-      // Create canvas directly from element with simple options
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: true,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        foreignObjectRendering: false
-      });
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
 
-      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+      // Wait for content to load, then trigger print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          toast.success('Print dialog opened! Save as PDF to download.');
+          setDownloading(false);
+        }, 250);
+      };
 
-      // Calculate PDF dimensions
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
+      // Fallback if onload doesn't fire
+      setTimeout(() => {
+        if (downloading) {
+          printWindow.print();
+          toast.success('Print dialog opened! Save as PDF to download.');
+          setDownloading(false);
+        }
+      }, 1000);
 
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? 'portrait' : 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-
-      let position = 0;
-
-      // Convert canvas to image
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-      // Add image to PDF (handle multiple pages if needed)
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      // Download the PDF
-      const filename = `${guest.name.replace(/\s+/g, '_')}_Wedding_Invitation.pdf`;
-      pdf.save(filename);
-
-      console.log('PDF saved successfully');
-      toast.success('Invitation downloaded successfully!');
     } catch (error) {
-      console.error('PDF generation error:', error);
+      console.error('Download error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to generate invitation: ${errorMessage}`);
-    } finally {
+      toast.error(errorMessage);
       setDownloading(false);
     }
+  };
+
+  // Helper function to extract and inline styles
+  const getInlineStyles = () => {
+    const styles: string[] = [];
+
+    // Get all stylesheets
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      try {
+        const sheet = document.styleSheets[i];
+        if (sheet.cssRules) {
+          for (let j = 0; j < sheet.cssRules.length; j++) {
+            styles.push(sheet.cssRules[j].cssText);
+          }
+        }
+      } catch (e) {
+        // Skip external stylesheets that can't be accessed
+        console.log('Skipping external stylesheet');
+      }
+    }
+
+    return styles.join('\n');
   };
 
   const formatDate = (dateString: string) => {

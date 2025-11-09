@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Tag, { ITag } from '@/lib/models/Tag';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
-import mongoose from 'mongoose';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -14,8 +12,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const { userId, newTagId, coupleId: bodyCoupleId } = await request.json();
 
     if (!userId || !newTagId) {
@@ -26,10 +22,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const coupleId = auth.role === 'couple' ? auth.coupleId : bodyCoupleId;
-    const newTag = await Tag.findOne({
-      _id: newTagId,
-      ...(coupleId ? { couple: coupleId } : {})
-    }) as ITag | null;
+    const newTag = await prisma.tag.findFirst({
+      where: {
+        id: newTagId,
+        ...(coupleId ? { coupleId } : {})
+      }
+    });
 
     if (!newTag) {
       return NextResponse.json(
@@ -38,43 +36,59 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const currentTag = await Tag.findOne({ users: userId, couple: newTag.couple }) as ITag | null;
+    const currentTag = await prisma.tag.findFirst({
+      where: {
+        coupleId: newTag.coupleId,
+        guests: {
+          some: {
+            id: userId
+          }
+        }
+      }
+    });
 
-    if (currentTag && currentTag._id.equals(newTag._id)) {
+    if (currentTag && currentTag.id === newTag.id) {
       return NextResponse.json({ message: 'User already assigned to this tag' });
     }
 
-    const session = await mongoose.startSession();
+    // Prisma handles transactions internally with multiple operations
     try {
-      await session.withTransaction(async () => {
+      await prisma.$transaction(async (tx) => {
+        // Remove user from current tag if exists
         if (currentTag) {
-          await Tag.findByIdAndUpdate(
-            currentTag._id,
-            { $pull: { users: userId } },
-            { session }
-          );
+          await tx.tag.update({
+            where: { id: currentTag.id },
+            data: {
+              guests: {
+                disconnect: { id: userId }
+              }
+            }
+          });
         }
 
-        await Tag.findByIdAndUpdate(
-          newTag._id,
-          { $addToSet: { users: userId } },
-          { session }
-        );
+        // Add user to new tag
+        await tx.tag.update({
+          where: { id: newTag.id },
+          data: {
+            guests: {
+              connect: { id: userId }
+            }
+          }
+        });
       });
-      await session.endSession();
 
       return NextResponse.json({ message: 'User reassigned successfully' });
     } catch (error: any) {
-      await session.abortTransaction();
-      await session.endSession();
+      console.error('Error reassigning user to tag:', error);
       return NextResponse.json(
-        { message: error.message },
+        { message: 'Failed to reassign user. Please try again.' },
         { status: 500 }
       );
     }
   } catch (error: any) {
+    console.error('Error in reassign tag route:', error);
     return NextResponse.json(
-      { message: error.message },
+      { message: 'An error occurred while reassigning the user.' },
       { status: 500 }
     );
   }

@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Message from '@/lib/models/Message';
+import prisma from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-
     const { coupleId, guestName, email, message } = await request.json();
 
     if (!coupleId || !guestName || !message) {
       return NextResponse.json({ message: 'Required fields missing' }, { status: 400 });
     }
 
-    const newMessage = new Message({
-      couple: coupleId,
-      guestName,
-      email,
-      message,
-      approved: false,
-      featured: false
+    const newMessage = await prisma.message.create({
+      data: {
+        coupleId,
+        guestName,
+        email: email || null,
+        message,
+        approved: false,
+        featured: false
+      }
     });
 
-    await newMessage.save();
     return NextResponse.json({ success: true, message: 'Message submitted successfully!' }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error('Error submitting message:', error);
+    return NextResponse.json({ error: 'Failed to submit message. Please try again.' }, { status: 400 });
   }
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Tag from '@/lib/models/Tag';
+import prisma from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function PUT(
@@ -16,8 +15,6 @@ export async function PUT(
       );
     }
 
-    await dbConnect();
-
     const { id } = await params;
     const { name, color } = await request.json();
     const { searchParams } = new URL(request.url);
@@ -32,21 +29,29 @@ export async function PUT(
       );
     }
 
-    const filter: any = { _id: id };
+    const where: any = { id };
     if (coupleId) {
-      filter.couple = coupleId;
+      where.coupleId = coupleId;
     }
 
-    const update: any = { name };
+    const updateData: any = { name };
     if (color) {
-      update.color = color;
+      updateData.color = color;
     }
 
-    const tag = await Tag.findOneAndUpdate(
-      filter,
-      update,
-      { new: true }
-    ).populate('users', 'name phoneNumber');
+    const tag = await prisma.tag.update({
+      where,
+      data: updateData,
+      include: {
+        guests: {
+          select: {
+            id: true,
+            name: true,
+            phoneNumber: true
+          }
+        }
+      }
+    });
 
     if (!tag) {
       return NextResponse.json(
@@ -57,8 +62,21 @@ export async function PUT(
 
     return NextResponse.json(tag);
   } catch (error: any) {
+    console.error('Error updating tag:', error);
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { message: 'Tag not found' },
+        { status: 404 }
+      );
+    }
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { message: 'A tag with this name already exists' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
-      { message: error.message },
+      { message: 'Failed to update tag. Please try again.' },
       { status: 500 }
     );
   }
@@ -77,20 +95,20 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
-
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const coupleId = auth.role === 'couple'
       ? auth.coupleId
       : searchParams.get('coupleId');
 
-    const filter: any = { _id: id };
+    const where: any = { id };
     if (coupleId) {
-      filter.couple = coupleId;
+      where.coupleId = coupleId;
     }
 
-    const tag = await Tag.findOneAndDelete(filter);
+    const tag = await prisma.tag.delete({
+      where
+    });
 
     if (!tag) {
       return NextResponse.json(
@@ -101,8 +119,15 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Tag deleted' });
   } catch (error: any) {
+    console.error('Error deleting tag:', error);
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { message: 'Tag not found' },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
-      { message: error.message },
+      { message: 'Failed to delete tag. Please try again.' },
       { status: 500 }
     );
   }
