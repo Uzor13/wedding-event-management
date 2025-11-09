@@ -44,9 +44,9 @@ eventSchema.index({ date: 1, couple: 1 });
 eventSchema.index({ eventType: 1, couple: 1 });
 
 declare global {
-  var Event: Model<IEvent> | undefined;
+  var _mongooseEventModel: Model<IEvent> | undefined;
 }
 
-const Event = global.Event || mongoose.models.Event || (global.Event = mongoose.model<IEvent>('Event', eventSchema));
+const Event = mongoose.models.Event || global._mongooseEventModel || (global._mongooseEventModel = mongoose.model<IEvent>('Event', eventSchema));
 
 export default Event;

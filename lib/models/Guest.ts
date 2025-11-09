@@ -73,6 +73,6 @@ declare global {
   var Guest: Model<IGuest> | undefined;
 }
 
-const Guest = global.Guest || mongoose.models.Guest || (global.Guest = mongoose.model<IGuest>('Guest', guestSchema));
+const Guest = mongoose.models.Guest || global.Guest || (global.Guest = mongoose.model<IGuest>('Guest', guestSchema));
 
 export default Guest;

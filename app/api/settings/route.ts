@@ -33,9 +33,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(settings);
   } catch (error: any) {
+    const status = ['No token provided', 'Invalid token', 'jwt malformed'].includes(error?.message) ? 401 : 500;
     return NextResponse.json(
       { message: error.message },
-      { status: 500 }
+      { status }
     );
   }
 }
@@ -85,9 +86,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(settings);
   } catch (error: any) {
+    const status = ['No token provided', 'Invalid token', 'jwt malformed'].includes(error?.message) ? 401 : 500;
     return NextResponse.json(
       { message: error.message },
-      { status: 500 }
+      { status }
     );
   }
 }
