@@ -77,14 +77,16 @@ export default function GuestList() {
   const currentCoupleId = isAdmin ? selectedCoupleId : coupleId;
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  // Check authentication and redirect if not logged in
   useEffect(() => {
     if (!token) {
       router.push('/login');
-      return;
     }
+  }, [token, router]);
 
+  useEffect(() => {
     const loadCouples = async () => {
-      if (!isAdmin) return;
+      if (!isAdmin || !token) return;
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples`,

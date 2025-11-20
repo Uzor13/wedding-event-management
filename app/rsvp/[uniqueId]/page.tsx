@@ -72,7 +72,7 @@ export default function RSVPPage({ params }: { params: Promise<{ uniqueId: strin
     message: ''
   });
   const [formData, setFormData] = useState({
-    rsvpStatus: false,
+    rsvpStatus: true, // Default to "Joyfully Accept"
     plusOneName: '',
     plusOnePhone: '',
     plusOneRsvp: false

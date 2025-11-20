@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: "Wedding RSVP",
@@ -29,6 +30,7 @@ export default function RootLayout({
             <Toaster position="top-right" richColors closeButton />
           </SettingsProvider>
         </AuthProvider>
+      <Analytics/>
       </body>
     </html>
   );

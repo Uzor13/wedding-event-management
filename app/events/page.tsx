@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import NavBar from '@/components/ui/navbar';
 import { toast } from 'sonner';
-import { Calendar, Plus, Trash2, Edit2, MapPin, Clock, Users as UsersIcon, Star } from 'lucide-react';
+import { Calendar, Plus, Trash2, Edit2, MapPin, Clock, Users as UsersIcon, Star, X } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -23,6 +23,11 @@ interface Event {
   isMainEvent: boolean;
 }
 
+interface Couple {
+  id: string;
+  name: string;
+}
+
 const EVENT_TYPES = [
   { value: 'rehearsal', label: 'Rehearsal Dinner' },
   { value: 'ceremony', label: 'Ceremony' },
@@ -33,8 +38,9 @@ const EVENT_TYPES = [
 
 export default function EventsPage() {
   const { token, isAdmin, coupleId } = useAuth();
-  const { selectedCoupleId } = useSettings();
+  const { selectedCoupleId, setSelectedCoupleId } = useSettings();
   const [events, setEvents] = useState<Event[]>([]);
+  const [couples, setCouples] = useState<Couple[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -60,6 +66,25 @@ export default function EventsPage() {
     fetchEvents();
   }, [token, currentCoupleId]);
 
+  useEffect(() => {
+    const loadCouples = async () => {
+      if (!isAdmin || !token) return;
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setCouples(response.data);
+        if (!selectedCoupleId && response.data.length > 0) {
+          setSelectedCoupleId(response.data[0].id);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadCouples();
+  }, [isAdmin, token, selectedCoupleId, setSelectedCoupleId]);
+
   const fetchEvents = async () => {
     if (!currentCoupleId) {
       setLoading(false);
@@ -84,6 +109,11 @@ export default function EventsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!currentCoupleId) {
+      toast.error('Please select a couple first');
+      return;
+    }
 
     try {
       if (editingEvent) {
@@ -112,8 +142,8 @@ export default function EventsPage() {
       setEditingEvent(null);
       resetForm();
       fetchEvents();
-    } catch (error) {
-      toast.error('Failed to save event');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save event');
     }
   };
 
@@ -127,8 +157,8 @@ export default function EventsPage() {
       );
       toast.success('Event deleted');
       fetchEvents();
-    } catch (error) {
-      toast.error('Failed to delete event');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete event');
     }
   };
 
@@ -176,6 +206,26 @@ export default function EventsPage() {
     <>
       <NavBar />
       <div className="container mx-auto p-6 max-w-6xl">
+        {/* Couple Selector for Admin */}
+        {isAdmin && couples.length > 0 && (
+          <div className="mb-6 bg-white p-4 rounded-lg shadow">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Couple
+            </label>
+            <select
+              value={selectedCoupleId || ''}
+              onChange={(e) => setSelectedCoupleId(e.target.value)}
+              className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {couples.map((couple) => (
+                <option key={couple.id} value={couple.id}>
+                  {couple.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -191,6 +241,7 @@ export default function EventsPage() {
               setShowDialog(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            disabled={!currentCoupleId}
           >
             <Plus className="w-5 h-5" />
             Add Event
@@ -286,11 +337,24 @@ export default function EventsPage() {
 
         {/* Add/Edit Dialog */}
         {showDialog && (
-          <div className="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">
-                {editingEvent ? 'Edit Event' : 'Create Event'}
-              </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">
+                  {editingEvent ? 'Edit Event' : 'Create Event'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDialog(false);
+                    setEditingEvent(null);
+                    resetForm();
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">

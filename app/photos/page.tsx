@@ -28,10 +28,16 @@ const CATEGORIES = [
   { value: 'other', label: 'Other' }
 ];
 
+interface Couple {
+  id: string;
+  name: string;
+}
+
 export default function PhotoGallery() {
   const { token, isAdmin, coupleId } = useAuth();
-  const { selectedCoupleId } = useSettings();
+  const { selectedCoupleId, setSelectedCoupleId } = useSettings();
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [couples, setCouples] = useState<Couple[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showDialog, setShowDialog] = useState(false);
@@ -54,6 +60,25 @@ export default function PhotoGallery() {
     }
     fetchPhotos();
   }, [token, currentCoupleId]);
+
+  useEffect(() => {
+    const loadCouples = async () => {
+      if (!isAdmin || !token) return;
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/admin/couples`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setCouples(response.data);
+        if (!selectedCoupleId && response.data.length > 0) {
+          setSelectedCoupleId(response.data[0].id);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadCouples();
+  }, [isAdmin, token, selectedCoupleId, setSelectedCoupleId]);
 
   const fetchPhotos = async () => {
     if (!currentCoupleId) {
@@ -117,6 +142,11 @@ export default function PhotoGallery() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!currentCoupleId) {
+      toast.error('Please select a couple first');
+      return;
+    }
+
     if (!formData.imageUrl) {
       toast.error('Please provide an image');
       return;
@@ -136,8 +166,8 @@ export default function PhotoGallery() {
       setShowDialog(false);
       resetForm();
       fetchPhotos();
-    } catch (error) {
-      toast.error('Failed to add photo');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add photo');
     }
   };
 
@@ -191,6 +221,26 @@ export default function PhotoGallery() {
     <>
       <NavBar />
       <div className="container mx-auto p-6 max-w-7xl">
+        {/* Couple Selector for Admin */}
+        {isAdmin && couples.length > 0 && (
+          <div className="mb-6 bg-white p-4 rounded-lg shadow">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Couple
+            </label>
+            <select
+              value={selectedCoupleId || ''}
+              onChange={(e) => setSelectedCoupleId(e.target.value)}
+              className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {couples.map((couple) => (
+                <option key={couple.id} value={couple.id}>
+                  {couple.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -205,6 +255,7 @@ export default function PhotoGallery() {
               setShowDialog(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            disabled={!currentCoupleId}
           >
             <Plus className="w-5 h-5" />
             Add Photo
@@ -332,9 +383,21 @@ export default function PhotoGallery() {
 
         {/* Add Photo Dialog */}
         {showDialog && (
-          <div className="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Add Photo</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Add Photo</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDialog(false);
+                    resetForm();
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Upload from Device</label>

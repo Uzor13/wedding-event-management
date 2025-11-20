@@ -69,6 +69,13 @@ export default function Settings() {
   const { selectedCoupleId, setSelectedCoupleId } = useSettings();
   const currentCoupleId = isAdmin ? selectedCoupleId : coupleId;
 
+  // Check authentication and redirect if not logged in
+  useEffect(() => {
+    if (!token) {
+      router.push('/login');
+    }
+  }, [token, router]);
+
   useEffect(() => {
     const loadCouples = async () => {
       if (!isAdmin || !token) return;
@@ -137,12 +144,36 @@ export default function Settings() {
           // Keep original format if parsing fails
         }
 
+        // Convert time format from "2:00 PM" to "14:00" for time input
+        let formattedTime = response.data.eventTime || '';
+        if (formattedTime && (formattedTime.includes('AM') || formattedTime.includes('PM'))) {
+          try {
+            const timeMatch = formattedTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (timeMatch) {
+              let hours = parseInt(timeMatch[1]);
+              const minutes = timeMatch[2];
+              const period = timeMatch[3].toUpperCase();
+
+              // Convert to 24-hour format
+              if (period === 'PM' && hours !== 12) {
+                hours += 12;
+              } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+              }
+
+              formattedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+            }
+          } catch (e) {
+            console.error('Failed to parse time:', e);
+          }
+        }
+
         // Use couple data as fallback for empty fields
         setSettings({
           ...response.data,
           coupleNames: response.data.coupleNames || coupleData?.name || '',
           eventDate: formattedDate,
-          eventTime: response.data.eventTime || '',
+          eventTime: formattedTime,
           eventTitle: response.data.eventTitle || '',
           venueName: response.data.venueName || '',
           venueAddress: response.data.venueAddress || '',
