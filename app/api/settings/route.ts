@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const allowedFields = ['eventTitle', 'coupleNames', 'eventDate', 'eventTime', 'venueName', 'venueAddress', 'colorOfDay'];
+    const allowedFields = ['eventTitle', 'coupleNames', 'eventDate', 'eventTime', 'venueName', 'venueAddress', 'colorOfDay', 'totalBudget'];
     const themeFields = ['primaryColor', 'secondaryColor', 'accentColor', 'backgroundColor', 'textColor', 'qrBackgroundColor'];
     const featureFlags = ['enableTimeline', 'enableMessages', 'enableEvents', 'enableRegistry', 'enablePhotos', 'enableBudget', 'enableSeating'];
 
@@ -175,4 +175,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ message }, { status });
   }
+}
+
+// PUT uses the same logic as POST (upsert)
+export async function PUT(request: NextRequest) {
+  return POST(request);
 }
