@@ -105,7 +105,7 @@ export default function Dashboard() {
         axios.get(`${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget`, {
           headers: { Authorization: `Bearer ${token}` },
           params: apiParams
-        }).catch(() => ({ data: [] })),
+        }).catch(() => ({ data: { items: [], totalBudget: 0 } })),
         axios.get(`${process.env.NEXT_PUBLIC_SERVER_LINK}/api/events`, {
           headers: { Authorization: `Bearer ${token}` },
           params: apiParams
@@ -123,7 +123,7 @@ export default function Dashboard() {
       setGuests(guestsRes.data);
       setTags(tagsRes.data);
       setSeatingGuests(seatingRes.data);
-      setBudgetItems(budgetRes.data);
+      setBudgetItems(budgetRes.data.items || budgetRes.data);
       setEvents(eventsRes.data);
       setPhotos(photosRes.data);
       setTimelineItems(timelineRes.data);

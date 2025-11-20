@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const allowedFields = ['eventTitle', 'coupleNames', 'eventDate', 'eventTime', 'venueName', 'venueAddress', 'colorOfDay', 'totalBudget'];
+    const allowedFields = ['eventTitle', 'coupleNames', 'eventDate', 'eventTime', 'venueName', 'venueAddress', 'colorOfDay'];
     const themeFields = ['primaryColor', 'secondaryColor', 'accentColor', 'backgroundColor', 'textColor', 'qrBackgroundColor'];
     const featureFlags = ['enableTimeline', 'enableMessages', 'enableEvents', 'enableRegistry', 'enablePhotos', 'enableBudget', 'enableSeating'];
 

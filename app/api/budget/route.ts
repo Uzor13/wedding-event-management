@@ -16,15 +16,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Couple ID required' }, { status: 400 });
     }
 
-    const items = await prisma.budgetItem.findMany({
-      where: { coupleId },
-      orderBy: [
-        { category: 'asc' },
-        { createdAt: 'desc' }
-      ]
-    });
+    const [items, settings] = await Promise.all([
+      prisma.budgetItem.findMany({
+        where: { coupleId },
+        orderBy: [
+          { category: 'asc' },
+          { createdAt: 'desc' }
+        ]
+      }),
+      prisma.setting.findUnique({
+        where: { coupleId },
+        select: { totalBudget: true }
+      })
+    ]);
 
-    return NextResponse.json(items);
+    return NextResponse.json({
+      items,
+      totalBudget: settings?.totalBudget || 0
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

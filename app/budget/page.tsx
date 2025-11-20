@@ -85,26 +85,17 @@ export default function BudgetTracker() {
     }
 
     try {
-      const [budgetRes, settingsRes] = await Promise.all([
-        axios.get(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: isAdmin ? { coupleId: currentCoupleId } : {}
-          }
-        ),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/settings`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            params: isAdmin && currentCoupleId ? { coupleId: currentCoupleId } : {}
-          }
-        ).catch(() => ({ data: {} }))
-      ]);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: isAdmin ? { coupleId: currentCoupleId } : {}
+        }
+      );
 
-      setItems(budgetRes.data);
-      setTotalBudget(settingsRes.data.totalBudget || 0);
-      setBudgetInput(settingsRes.data.totalBudget?.toString() || '');
+      setItems(response.data.items);
+      setTotalBudget(response.data.totalBudget || 0);
+      setBudgetInput(response.data.totalBudget?.toString() || '');
     } catch (error) {
       toast.error('Failed to load budget items');
     } finally {
@@ -119,13 +110,20 @@ export default function BudgetTracker() {
       return;
     }
 
+    if (!currentCoupleId) {
+      toast.error('Please select a couple first');
+      return;
+    }
+
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/settings`,
-        { totalBudget: budget },
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget/total`,
         {
-          headers: { Authorization: `Bearer ${token}` },
-          params: isAdmin && currentCoupleId ? { coupleId: currentCoupleId } : {}
+          totalBudget: budget,
+          coupleId: currentCoupleId
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
       setTotalBudget(budget);
