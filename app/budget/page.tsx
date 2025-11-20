@@ -37,6 +37,8 @@ export default function BudgetTracker() {
   const [totalBudget, setTotalBudget] = useState<number>(0);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<BudgetItem | null>(null);
   const [formData, setFormData] = useState({
     category: '',
     itemName: '',
@@ -193,9 +195,38 @@ export default function BudgetTracker() {
         { ...item, paid: !item.paid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      toast.success(item.paid ? 'Marked as unpaid' : 'Marked as paid');
       fetchItems();
     } catch (error) {
       toast.error('Failed to update');
+    }
+  };
+
+  const startEdit = (item: BudgetItem) => {
+    setEditingItemId(item.id);
+    setEditFormData({ ...item });
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditFormData(null);
+  };
+
+  const handleUpdateItem = async () => {
+    if (!editFormData) return;
+
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_LINK}/api/budget/${editFormData.id}`,
+        editFormData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Budget item updated!');
+      setEditingItemId(null);
+      setEditFormData(null);
+      fetchItems();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update item');
     }
   };
 
@@ -387,31 +418,131 @@ export default function BudgetTracker() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3 text-sm">{item.category}</td>
-                  <td className="px-4 py-3 text-sm font-medium">{item.itemName}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{item.vendor || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-right">N{item.estimatedCost.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm text-right">N{(item.actualCost || 0).toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => togglePaid(item)}
-                      className={`p-1 rounded ${item.paid ? 'text-green-600' : 'text-gray-400'}`}
-                    >
-                      {item.paid ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {items.map((item) => {
+                const isEditing = editingItemId === item.id;
+                return (
+                  <tr key={item.id} className={isEditing ? 'bg-blue-50' : ''}>
+                    <td className="px-4 py-3 text-sm">
+                      {isEditing ? (
+                        <select
+                          value={editFormData?.category || ''}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, category: e.target.value } : null)}
+                          className="w-full px-2 py-1 border rounded"
+                        >
+                          {CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        item.category
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editFormData?.itemName || ''}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, itemName: e.target.value } : null)}
+                          className="w-full px-2 py-1 border rounded"
+                        />
+                      ) : (
+                        item.itemName
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editFormData?.vendor || ''}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, vendor: e.target.value } : null)}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="Vendor"
+                        />
+                      ) : (
+                        item.vendor || '-'
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-right">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editFormData?.estimatedCost || ''}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, estimatedCost: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full px-2 py-1 border rounded text-right"
+                        />
+                      ) : (
+                        `₦${item.estimatedCost.toLocaleString()}`
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-right">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editFormData?.actualCost || ''}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, actualCost: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full px-2 py-1 border rounded text-right"
+                          placeholder="0"
+                        />
+                      ) : (
+                        `₦${(item.actualCost || 0).toLocaleString()}`
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {isEditing ? (
+                        <span className="text-xs text-gray-500">Editing...</span>
+                      ) : (
+                        <button
+                          onClick={() => togglePaid(item)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            item.paid
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {item.paid ? 'Paid' : 'Unpaid'}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {isEditing ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={handleUpdateItem}
+                            className="p-1 text-green-600 hover:text-green-800"
+                            title="Save"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="p-1 text-gray-600 hover:text-gray-800"
+                            title="Cancel"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => startEdit(item)}
+                            className="p-1 text-blue-600 hover:text-blue-800"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-1 text-red-600 hover:text-red-800"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
