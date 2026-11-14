@@ -246,7 +246,7 @@ npm run dev
 # Test with curl
 curl -X POST http://localhost:3000/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"YOUR_ADMIN_USERNAME","password":"YOUR_ADMIN_PASSWORD"}'
 
 # Test with authentication
 curl -X GET http://localhost:3000/api/admin/guests \
