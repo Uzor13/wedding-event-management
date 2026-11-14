@@ -277,7 +277,7 @@ Or use tools like:
 
 ## 📚 Reference Files
 
-All source code is in: `/Users/preciousuzochukwu/WebstormProjects/wedding-rsvp-backend/`
+All source code is in: `/Users/janedoe/WebstormProjects/wedding-rsvp-backend/`
 
 - Controllers: `controllers/`
 - Routes: `routes/`
