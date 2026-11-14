@@ -62,7 +62,7 @@ This project has been migrated from a React (CRA) + Express architecture to a un
 
 1. **Install dependencies:**
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
 
 2. **Configure environment variables:**
@@ -79,10 +79,16 @@ This project has been migrated from a React (CRA) + Express architecture to a un
    http://localhost:3000
    ```
 
-### Default Admin Credentials
+### Admin Credentials
 
-- **Username:** admin
-- **Password:** admin123
+Admin login credentials are read from environment variables. Set them in `.env.local`:
+
+```
+ADMIN_USERNAME=your-admin-username
+ADMIN_PASSWORD=a-strong-password
+```
+
+Login is disabled until both are set.
 
 ## 📁 Project Structure
 

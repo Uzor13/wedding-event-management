@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateToken } from '@/lib/auth';
 
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123'
-};
-
 export async function POST(request: NextRequest) {
   try {
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminUsername || !adminPassword) {
+      return NextResponse.json(
+        { message: 'Admin credentials are not configured' },
+        { status: 500 }
+      );
+    }
+
     const { username, password } = await request.json();
 
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    if (username === adminUsername && password === adminPassword) {
       const token = generateToken({ userId: 'admin', role: 'admin' });
       return NextResponse.json({ token, role: 'admin' });
     }
