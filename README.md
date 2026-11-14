@@ -179,3 +179,7 @@ See `BACKEND_MIGRATION_GUIDE.md` for complete API documentation.
 **Current Version:** 0.1.0 (Migration in Progress)
 # wedding-event-management
 # wedding-event-management
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
