@@ -106,6 +106,7 @@ model Setting {
   backgroundColor    String   @default("#FFFFFF")
   textColor          String   @default("#000000")
   qrBackgroundColor  String   @default("#FFFFFF")
+  totalBudget        Float    @default(0)
 
   // Feature flags (only editable by admin)
   enableTimeline     Boolean  @default(false)

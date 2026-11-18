@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "settings" ADD COLUMN     "totalBudget" DOUBLE PRECISION NOT NULL DEFAULT 0;
